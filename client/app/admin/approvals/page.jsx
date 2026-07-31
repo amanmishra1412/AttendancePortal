@@ -62,8 +62,6 @@ export default function PendingApprovalsPage() {
               <tr>
                 <th className="p-3.5 rounded-l-xl">Employee ID</th>
                 <th className="p-3.5">Name & Email</th>
-                <th className="p-3.5">Department</th>
-                <th className="p-3.5">Designation</th>
                 <th className="p-3.5">Proposed Base Salary</th>
                 <th className="p-3.5">Email Verification</th>
                 <th className="p-3.5 rounded-r-xl text-right">Approval Decision</th>
@@ -72,7 +70,7 @@ export default function PendingApprovalsPage() {
             <tbody className="divide-y divide-slate-100">
               {!pendingApprovals || pendingApprovals.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-slate-400">
+                  <td colSpan={5} className="text-center py-12 text-slate-400">
                     <UserCheck className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                     <p className="font-semibold text-slate-600">No pending employee registration approvals.</p>
                     <p className="text-[11px] text-slate-400 mt-1">New registrations verified via OTP will appear here for your review.</p>
@@ -86,8 +84,6 @@ export default function PendingApprovalsPage() {
                       <div className="font-semibold text-slate-900">{emp.name}</div>
                       <div className="text-slate-500 text-[11px]">{emp.email}</div>
                     </td>
-                    <td className="p-3.5 text-slate-700">{emp.department}</td>
-                    <td className="p-3.5 text-slate-600">{emp.designation}</td>
                     <td className="p-3.5 font-bold text-slate-900">₹{emp.baseSalary?.toLocaleString()}</td>
                     <td className="p-3.5">
                       <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1">

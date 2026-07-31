@@ -7,7 +7,8 @@ import {
   generateSalaryAction,
   clearSalaryStatus,
 } from '../../store/slices/salarySlice';
-import { Wallet, Play, FileText, CheckCircle, XCircle, Calculator, TrendingUp, TrendingDown, DollarSign } from 'lucide-react';
+import { api } from '../../shared/services/api';
+import { Wallet, Play, FileText, CheckCircle, XCircle, Calculator, Download, Loader2 } from 'lucide-react';
 
 export default function SalaryPage() {
   const dispatch = useDispatch();
@@ -17,6 +18,7 @@ export default function SalaryPage() {
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
   const [previewPdfUrl, setPreviewPdfUrl] = useState(null);
+  const [loadingPdfId, setLoadingPdfId] = useState(null);
 
   useEffect(() => {
     dispatch(fetchSalaries({ month: selectedMonth, year: selectedYear }));
@@ -30,9 +32,21 @@ export default function SalaryPage() {
     }
   };
 
-  const handlePdfView = (salaryId) => {
-    const pdfUrl = `http://localhost:5000/api/salary/${salaryId}/pdf?token=${localStorage.getItem('token')}`;
-    setPreviewPdfUrl(pdfUrl);
+  const handlePdfView = async (salaryId) => {
+    setLoadingPdfId(salaryId);
+    try {
+      const res = await api.get(`/salary/${salaryId}/pdf`, {
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      setPreviewPdfUrl(url);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to generate salary slip PDF. Please try again.');
+    } finally {
+      setLoadingPdfId(null);
+    }
   };
 
   const isAdmin = user?.role === 'Admin';
@@ -42,7 +56,7 @@ export default function SalaryPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Salary Tracker & Payroll Engine</h1>
+          <h1 className="text-2xl font-black text-slate-900 font-sans">Salary Tracker & Payroll Engine</h1>
           <p className="text-slate-500 text-xs mt-1">
             Exact minute-rate salary calculation (Base/30 & Base/270), overtime, shortfalls, & Sunday working pay
           </p>
@@ -146,8 +160,8 @@ export default function SalaryPage() {
                     )}
                     <td className="p-3.5 text-slate-900 font-bold">₹{s.baseSalary?.toLocaleString()}</td>
                     <td className="p-3.5 text-slate-600">
-                      <div>₹{s.dailyRate || Math.round(s.baseSalary/30)}/day</div>
-                      <div className="text-[10px] text-slate-400">₹{s.hourlyRate || Math.round(s.baseSalary/270)}/hr</div>
+                      <div>₹{s.dailyRate || Math.round(s.baseSalary / 30)}/day</div>
+                      <div className="text-[10px] text-slate-400">₹{s.hourlyRate || Math.round(s.baseSalary / 270)}/hr</div>
                     </td>
                     <td className="p-3.5 text-emerald-600 font-bold">+₹{s.overtimePay?.toLocaleString()}</td>
                     <td className="p-3.5 text-rose-600 font-bold">
@@ -159,10 +173,15 @@ export default function SalaryPage() {
                     <td className="p-3.5 text-right">
                       <button
                         onClick={() => handlePdfView(s._id)}
-                        className="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold border border-indigo-200 transition inline-flex items-center gap-1.5"
+                        disabled={loadingPdfId === s._id}
+                        className="px-3.5 py-2 rounded-xl bg-indigo-50 text-indigo-700 hover:bg-indigo-100 text-xs font-bold border border-indigo-200 transition inline-flex items-center gap-1.5"
                       >
-                        <FileText className="w-4 h-4 text-indigo-600" />
-                        <span>PDF Slip</span>
+                        {loadingPdfId === s._id ? (
+                          <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                        ) : (
+                          <FileText className="w-4 h-4 text-indigo-600" />
+                        )}
+                        <span>{loadingPdfId === s._id ? 'Loading...' : 'PDF Slip'}</span>
                       </button>
                     </td>
                   </tr>
@@ -182,12 +201,22 @@ export default function SalaryPage() {
                 <FileText className="w-4 h-4 text-indigo-600" />
                 <span>Official PDF Executive Pay Slip</span>
               </h3>
-              <button
-                onClick={() => setPreviewPdfUrl(null)}
-                className="text-slate-600 hover:text-slate-900 px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold"
-              >
-                Close Window
-              </button>
+              <div className="flex items-center gap-2">
+                <a
+                  href={previewPdfUrl}
+                  download={`Salary_Slip_${selectedMonth}_${selectedYear}.pdf`}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download PDF</span>
+                </a>
+                <button
+                  onClick={() => setPreviewPdfUrl(null)}
+                  className="text-slate-600 hover:text-slate-900 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold"
+                >
+                  Close
+                </button>
+              </div>
             </div>
             <iframe src={previewPdfUrl} className="w-full flex-1 border-none" title="Salary PDF Slip" />
           </div>

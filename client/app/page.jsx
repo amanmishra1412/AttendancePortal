@@ -1,17 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { loginUser, registerUser, clearError } from '../store/slices/authSlice';
-import { Mail, Lock, User, Sparkles, ArrowRight, ShieldCheck, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, Sparkles, ArrowRight, ShieldCheck, AlertCircle, UserCheck } from 'lucide-react';
+
 import Link from 'next/link';
 
 export default function HomePage() {
   const dispatch = useDispatch();
   const router = useRouter();
-  const { loading, error } = useSelector((state) => state.auth);
+  const { user, token, loading, error } = useSelector((state) => state.auth);
 
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'signup'
 
   // Login Form
@@ -30,6 +32,36 @@ export default function HomePage() {
   });
 
   const [infoMessage, setInfoMessage] = useState(null);
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    const storedToken = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const storedUserStr = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+
+    if (storedToken) {
+      let role = user?.role;
+      if (!role && storedUserStr) {
+        try {
+          const parsed = JSON.parse(storedUserStr);
+          role = parsed?.role;
+        } catch (e) {}
+      }
+
+      if (role === 'Admin') {
+        router.replace('/admin/dashboard');
+      } else {
+        router.replace('/dashboard');
+      }
+    } else {
+      setCheckingAuth(false);
+    }
+  }, [user, token, router]);
+
+  const setDemoCredentials = () => {
+    dispatch(clearError());
+    setLoginEmail('rahul@company.com');
+    setLoginPassword('employeepassword123');
+  };
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
@@ -63,8 +95,19 @@ export default function HomePage() {
     }
   };
 
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-indigo-600 font-semibold text-sm">
+          <div className="w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+          <span>Redirecting to your dashboard...</span>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-1 relative overflow-hidden">
       {/* Background Decorative Glows */}
       <div className="absolute top-10 left-1/3 w-96 h-96 bg-indigo-200/40 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-10 right-1/3 w-96 h-96 bg-violet-200/40 rounded-full blur-3xl pointer-events-none"></div>
@@ -80,13 +123,13 @@ export default function HomePage() {
           </span>
         </div>
 
-        <Link
+        {/* <Link
           href="/admin/login"
           className="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold border border-slate-200 shadow-xs transition"
         >
           <ShieldCheck className="w-4 h-4 text-indigo-600" />
           <span>Admin Portal &rarr;</span>
-        </Link>
+        </Link> */}
       </header>
 
       {/* Main Container */}
@@ -141,6 +184,19 @@ export default function HomePage() {
         {/* Form: LOGIN */}
         {activeTab === 'login' ? (
           <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs">
+            {/* Quick Fill Demo Toolbar */}
+            {/* <div className="mb-4 bg-slate-50 p-3 rounded-2xl border border-slate-200 text-center">
+              <p className="text-[10px] uppercase font-bold text-slate-500 mb-2 tracking-wider">Quick Fill Demo Credentials</p>
+              <button
+                type="button"
+                onClick={setDemoCredentials}
+                className="w-full flex items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 py-2 rounded-xl text-xs font-semibold transition"
+              >
+                <UserCheck className="w-4 h-4 text-emerald-600" />
+                <span>Fill Employee Demo Account</span>
+              </button>
+            </div> */}
+
             <div>
               <label className="block font-semibold text-slate-700 mb-1.5 uppercase tracking-wider">Email Address</label>
               <div className="relative">
@@ -176,7 +232,7 @@ export default function HomePage() {
               disabled={loading}
               className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-indigo-600/20 text-sm transition flex items-center justify-center gap-2 mt-2"
             >
-              {loading ? <span>Signing In...</span> : <><span>Sign In to Employee Portal</span> <ArrowRight className="w-4 h-4" /></>}
+              {loading ? <span>Signing In...</span> : <><span>Sign In</span> <ArrowRight className="w-4 h-4" /></>}
             </button>
           </form>
         ) : (
@@ -227,26 +283,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Department</label>
-                <input
-                  type="text"
-                  value={signupData.department}
-                  onChange={(e) => setSignupData({ ...signupData, department: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl p-2.5 outline-none focus:border-indigo-600 focus:bg-white transition"
-                />
-              </div>
-              <div>
-                <label className="block font-semibold text-slate-700 mb-1">Designation</label>
-                <input
-                  type="text"
-                  value={signupData.designation}
-                  onChange={(e) => setSignupData({ ...signupData, designation: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl p-2.5 outline-none focus:border-indigo-600 focus:bg-white transition"
-                />
-              </div>
-            </div>
+
 
             <button
               type="submit"

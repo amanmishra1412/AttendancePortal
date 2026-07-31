@@ -8,7 +8,7 @@ import {
   updateLeaveStatusAction,
   clearLeaveStatus,
 } from '../../store/slices/leaveSlice';
-import { PlusCircle, CheckCircle, XCircle, Check, X } from 'lucide-react';
+import { PlusCircle, CheckCircle, XCircle, Check, X, CalendarDays, Award, Clock } from 'lucide-react';
 
 export default function LeavePage() {
   const dispatch = useDispatch();
@@ -19,7 +19,7 @@ export default function LeavePage() {
   const [filterStatus, setFilterStatus] = useState('');
 
   const [formData, setFormData] = useState({
-    leaveType: 'Paid',
+    leaveType: 'Unpaid',
     startDate: '',
     endDate: '',
     reason: '',
@@ -34,7 +34,7 @@ export default function LeavePage() {
     const res = await dispatch(applyLeaveAction(formData));
     if (res.meta.requestStatus === 'fulfilled') {
       setShowApplyModal(false);
-      setFormData({ leaveType: 'Paid', startDate: '', endDate: '', reason: '' });
+      setFormData({ leaveType: 'Unpaid', startDate: '', endDate: '', reason: '' });
     }
   };
 
@@ -49,8 +49,10 @@ export default function LeavePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">Leave Applications & Approval Queue</h1>
-          <p className="text-slate-500 text-xs mt-1">Submit leave requests and manage manager approval decisions</p>
+          <h1 className="text-2xl font-black text-slate-900 font-sans">Leave Management & Official Holidays</h1>
+          <p className="text-slate-500 text-xs mt-1">
+            Submit leave applications, track status, and view company holiday & Sunday overtime rules
+          </p>
         </div>
         <button
           onClick={() => {
@@ -62,6 +64,32 @@ export default function LeavePage() {
           <PlusCircle className="w-4 h-4" />
           <span>Apply for Leave</span>
         </button>
+      </div>
+
+      {/* Official Holiday & Sunday Work Policy Banner */}
+      <div className="p-5 rounded-3xl bg-gradient-to-r from-indigo-900 to-slate-900 text-white shadow-md relative overflow-hidden">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
+          <div className="space-y-1 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-amber-400" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-300">
+                Official Company Holiday & Sunday Pay Rules
+              </span>
+            </div>
+            <h3 className="text-base font-bold text-white">Sundays & National Holidays Only</h3>
+            <p className="text-slate-300 text-xs leading-relaxed">
+              There are no paid leave quotas. Official company holidays are <span className="text-white font-semibold">Sundays and National Holidays</span>.
+              If an employee works on Sunday, all worked minutes are automatically calculated into monthly salary as <span className="text-emerald-400 font-bold">Sunday Overtime Bonus Pay</span>.
+            </p>
+          </div>
+          <div className="bg-white/10 backdrop-blur-md p-3.5 rounded-2xl border border-white/10 text-xs shrink-0 space-y-1">
+            <div className="flex items-center gap-2 text-emerald-300 font-bold">
+              <Award className="w-4 h-4" />
+              <span>Sunday Work Bonus</span>
+            </div>
+            <p className="text-[11px] text-slate-300">Calculated minute-by-minute into Salary</p>
+          </div>
+        </div>
       </div>
 
       {/* Alerts */}
@@ -78,26 +106,26 @@ export default function LeavePage() {
         </div>
       )}
 
-      {/* Quota Cards */}
+      {/* Overview Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">Paid Leave Quota</span>
-          <p className="text-3xl font-black text-emerald-600 mt-1">{user?.paidLeaveQuota || 18} Days</p>
-          <p className="text-[11px] text-slate-400 mt-1">Annual entitlement</p>
+          <span className="text-xs font-semibold text-slate-500">Official Company Holidays</span>
+          <p className="text-xl font-black text-indigo-600 mt-1">Sundays & Govt Holidays</p>
+          <p className="text-[11px] text-slate-400 mt-1">Weekly off & National calendar</p>
         </div>
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">Approved Leaves</span>
-          <p className="text-3xl font-black text-slate-900 mt-1">
+          <span className="text-xs font-semibold text-slate-500">Approved Leave Days</span>
+          <p className="text-2xl font-black text-slate-900 mt-1">
             {leaves.filter((l) => l.status === 'Approved').length} Requests
           </p>
           <p className="text-[11px] text-slate-400 mt-1">Current year total</p>
         </div>
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
           <span className="text-xs font-semibold text-slate-500">Pending Approvals</span>
-          <p className="text-3xl font-black text-amber-600 mt-1">
+          <p className="text-2xl font-black text-amber-600 mt-1">
             {leaves.filter((l) => l.status === 'Pending').length} Pending
           </p>
-          <p className="text-[11px] text-slate-400 mt-1">Awaiting decision</p>
+          <p className="text-[11px] text-slate-400 mt-1">Awaiting manager decision</p>
         </div>
       </div>
 
@@ -211,12 +239,11 @@ export default function LeavePage() {
                 <select
                   value={formData.leaveType}
                   onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl p-3 outline-none focus:border-indigo-600"
+                  className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl p-3 outline-none focus:border-indigo-600 font-medium"
                 >
-                  <option value="Paid">Paid Leave</option>
                   <option value="Unpaid">Unpaid Leave</option>
-                  <option value="Sick">Sick Leave</option>
-                  <option value="Casual">Casual Leave</option>
+                  <option value="Casual">Casual / Medical Leave</option>
+                  <option value="Other">Other Leave</option>
                 </select>
               </div>
 
@@ -248,7 +275,7 @@ export default function LeavePage() {
                 <textarea
                   required
                   rows={3}
-                  placeholder="Explain brief reason..."
+                  placeholder="Explain brief reason for your leave request..."
                   value={formData.reason}
                   onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 text-slate-900 rounded-xl p-3 outline-none focus:border-indigo-600 resize-none"

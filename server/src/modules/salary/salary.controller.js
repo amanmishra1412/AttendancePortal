@@ -205,15 +205,20 @@ export const downloadSalaryPDF = async (req, res, next) => {
     const startY = doc.y;
     doc.fontSize(9.5).fillColor('#334155');
 
-    doc.text(`Employee Name: ${salary.employee.name}`, 50, startY);
-    doc.text(`Employee ID: ${salary.employee.employeeId}`, 50, startY + 16);
-    doc.text(`Department: ${salary.employee.department}`, 50, startY + 32);
-    doc.text(`Designation: ${salary.employee.designation}`, 50, startY + 48);
+    const empName = salary.employee?.name || 'Employee';
+    const empId = salary.employee?.employeeId || '-';
+    const empDept = salary.employee?.department || 'General';
+    const empDesig = salary.employee?.designation || 'Staff';
+
+    doc.text(`Employee Name: ${empName}`, 50, startY);
+    doc.text(`Employee ID: ${empId}`, 50, startY + 16);
+    doc.text(`Department: ${empDept}`, 50, startY + 32);
+    doc.text(`Designation: ${empDesig}`, 50, startY + 48);
 
     doc.text(`Pay Period: ${salary.month}/${salary.year}`, 320, startY);
-    doc.text(`Base Monthly Salary: ₹${salary.baseSalary.toLocaleString()}`, 320, startY + 16);
-    doc.text(`Daily Rate (Base/30): ₹${salary.dailyRate}`, 320, startY + 32);
-    doc.text(`Hourly Rate (Daily/9): ₹${salary.hourlyRate}`, 320, startY + 48);
+    doc.text(`Base Monthly Salary: ₹${(salary.baseSalary || 0).toLocaleString()}`, 320, startY + 16);
+    doc.text(`Daily Rate (Base/30): ₹${salary.dailyRate || 0}`, 320, startY + 32);
+    doc.text(`Hourly Rate (Daily/9): ₹${salary.hourlyRate || 0}`, 320, startY + 48);
 
     doc.moveDown(5);
 
