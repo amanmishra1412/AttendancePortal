@@ -14,23 +14,31 @@ export default function MainLayout({ children }) {
   const { user } = useSelector((state) => state.auth);
   const [mounted, setMounted] = useState(false);
 
+  const isPublicOrAdmin = pathname.startsWith('/admin') || pathname === '/' || pathname === '/verify-otp';
+
   useEffect(() => {
     setMounted(true);
-    if (pathname.startsWith('/admin') || pathname === '/' || pathname === '/login' || pathname === '/verify-otp') {
+    if (isPublicOrAdmin) {
       return;
     }
 
-    if (!localStorage.getItem('token')) {
-      router.push('/');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) {
+      router.replace('/');
     } else {
       dispatch(fetchMe());
     }
-  }, [pathname, dispatch, router]);
+  }, [pathname, dispatch, router, isPublicOrAdmin]);
 
   if (!mounted) return null;
 
-  if (pathname.startsWith('/admin') || pathname === '/' || pathname === '/login' || pathname === '/verify-otp') {
+  if (isPublicOrAdmin) {
     return <main className="min-h-screen bg-slate-50 text-slate-900">{children}</main>;
+  }
+
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  if (!token) {
+    return null;
   }
 
   return (

@@ -60,7 +60,7 @@ export default function DashboardPage() {
             <p className="text-indigo-100 text-xs mt-1">
               {isAdmin
                 ? 'Overview of company attendance, payroll expense, and leave requests.'
-                : `Employee Portal - ${user?.designation} (${user?.department})`}
+                : 'Employee Portal - Attendance, Leaves & Payroll Management'}
             </p>
           </div>
 
