@@ -20,9 +20,13 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+const corsOriginSetting = config.corsOrigin && config.corsOrigin !== '*'
+  ? (config.corsOrigin.includes(',') ? config.corsOrigin.split(',').map((o) => o.trim()) : config.corsOrigin)
+  : '*';
+
 app.use(
   cors({
-    origin: '*',
+    origin: corsOriginSetting,
     credentials: true,
   })
 );
@@ -31,10 +35,22 @@ if (process.env.NODE_ENV !== 'test') {
   app.use(morgan('dev'));
 }
 
+import mongoose from 'mongoose';
+
 // Health Check
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ status: 'OK', message: 'Attendance & Payroll API is running' });
-});
+const healthHandler = (req, res) => {
+  const dbConnected = mongoose.connection.readyState === 1;
+  res.status(dbConnected ? 200 : 503).json({
+    status: dbConnected ? 'OK' : 'DEGRADED',
+    message: 'Attendance & Payroll API is running',
+    timestamp: new Date().toISOString(),
+    uptime: `${Math.floor(process.uptime())}s`,
+    database: dbConnected ? 'Connected' : 'Disconnected',
+  });
+};
+
+app.get('/health', healthHandler);
+app.get('/api/health', healthHandler);
 
 // API Routes
 app.use('/api/auth', authRoutes);

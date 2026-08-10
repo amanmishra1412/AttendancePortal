@@ -7,6 +7,7 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || 'fallback_jwt_secret',
   jwtExpire: process.env.JWT_EXPIRE || '30d',
   clientUrl: process.env.CLIENT_URL || 'http://localhost:3000',
+  corsOrigin: process.env.CORS_ORIGIN || process.env.CLIENT_URL || '*',
   smtp: {
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
     port: parseInt(process.env.SMTP_PORT) || 587,
