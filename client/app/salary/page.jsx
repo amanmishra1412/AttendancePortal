@@ -194,31 +194,50 @@ export default function SalaryPage() {
 
       {/* PDF View Modal */}
       {previewPdfUrl && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 w-full max-w-4xl h-[85vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl">
-            <div className="p-4 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
-              <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                <FileText className="w-4 h-4 text-indigo-600" />
-                <span>Official PDF Executive Pay Slip</span>
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200 w-full max-w-5xl h-[88vh] rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+            <div className="p-4 bg-slate-900 text-white flex justify-between items-center">
+              <h3 className="font-bold text-sm flex items-center gap-2">
+                <FileText className="w-4 h-4 text-indigo-400" />
+                <span>Executive Pay Slip Statement PDF</span>
               </h3>
               <div className="flex items-center gap-2">
                 <a
                   href={previewPdfUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-semibold border border-slate-700 transition"
+                >
+                  Open in New Tab
+                </a>
+                <a
+                  href={previewPdfUrl}
                   download={`Salary_Slip_${selectedMonth}_${selectedYear}.pdf`}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm"
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition shadow-sm"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>Download PDF</span>
                 </a>
                 <button
-                  onClick={() => setPreviewPdfUrl(null)}
-                  className="text-slate-600 hover:text-slate-900 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold"
+                  onClick={() => {
+                    URL.revokeObjectURL(previewPdfUrl);
+                    setPreviewPdfUrl(null);
+                  }}
+                  className="text-slate-400 hover:text-white px-3 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded-xl text-xs font-semibold transition"
                 >
                   Close
                 </button>
               </div>
             </div>
-            <iframe src={previewPdfUrl} className="w-full flex-1 border-none" title="Salary PDF Slip" />
+            <div className="flex-1 bg-slate-100 p-2 overflow-hidden flex flex-col">
+              <object
+                data={previewPdfUrl}
+                type="application/pdf"
+                className="w-full flex-1 rounded-2xl overflow-hidden shadow-inner border border-slate-200"
+              >
+                <iframe src={previewPdfUrl} className="w-full h-full border-none" title="Salary PDF Slip" />
+              </object>
+            </div>
           </div>
         </div>
       )}
