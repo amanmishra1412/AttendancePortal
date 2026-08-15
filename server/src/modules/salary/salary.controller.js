@@ -186,90 +186,195 @@ export const downloadSalaryPDF = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Salary record not found' });
     }
 
-    const doc = new PDFDocument({ margin: 40, size: 'A4' });
+    const doc = new PDFDocument({ margin: 35, size: 'A4' });
 
+    const empIdStr = salary.employee?.employeeId || 'EMP';
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename=Salary_Slip_${salary.employee.employeeId}_${salary.month}_${salary.year}.pdf`);
+    res.setHeader('Content-Disposition', `inline; filename=Salary_Slip_${empIdStr}_${salary.month}_${salary.year}.pdf`);
 
     doc.pipe(res);
 
-    // Header Branding (Light Styling)
-    doc.fillColor('#0F172A').fontSize(22).text('ATTENDANCE & PAYROLL SYSTEM', { align: 'center' });
-    doc.fontSize(11).fillColor('#64748B').text('Official Monthly Executive Pay Slip', { align: 'center' });
-    doc.moveDown(1.2);
+    const emp = salary.employee || {};
+    const formatCurrency = (val) => {
+      const num = Number(val || 0);
+      return `Rs. ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    };
 
-    doc.moveTo(40, doc.y).lineTo(550, doc.y).strokeColor('#CBD5E1').stroke();
-    doc.moveDown(1);
+    const monthNames = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December'
+    ];
+    const monthName = monthNames[(salary.month || 1) - 1] || `Month ${salary.month}`;
 
-    // Employee & Pay Period Details Grid
-    const startY = doc.y;
-    doc.fontSize(9.5).fillColor('#334155');
+    // --- Header Section ---
+    // Top Color Accent Bar
+    doc.rect(35, 35, 525, 6).fill('#4F46E5');
 
-    const empName = salary.employee?.name || 'Employee';
-    const empId = salary.employee?.employeeId || '-';
-    const empDept = salary.employee?.department || 'General';
-    const empDesig = salary.employee?.designation || 'Staff';
+    // Header Title
+    doc.fillColor('#0F172A').fontSize(18).font('Helvetica-Bold').text('ATTENDANCE & PAYROLL SYSTEM', 35, 50);
+    doc.fillColor('#64748B').fontSize(9).font('Helvetica').text('Official Executive Pay Slip Statement', 35, 72);
 
-    doc.text(`Employee Name: ${empName}`, 50, startY);
-    doc.text(`Employee ID: ${empId}`, 50, startY + 16);
-    doc.text(`Department: ${empDept}`, 50, startY + 32);
-    doc.text(`Designation: ${empDesig}`, 50, startY + 48);
+    // Right-aligned Document Metadata
+    doc.fillColor('#4F46E5').fontSize(11).font('Helvetica-Bold').text('CONFIDENTIAL PAYSLIP', 380, 50, { align: 'right' });
+    doc.fillColor('#475569').fontSize(9).font('Helvetica').text(`Pay Period: ${monthName} ${salary.year}`, 380, 66, { align: 'right' });
+    doc.fillColor('#166534').fontSize(8.5).font('Helvetica-Bold').text(`Status: ${salary.paymentStatus || 'Generated'}`, 380, 79, { align: 'right' });
 
-    doc.text(`Pay Period: ${salary.month}/${salary.year}`, 320, startY);
-    doc.text(`Base Monthly Salary: ₹${(salary.baseSalary || 0).toLocaleString()}`, 320, startY + 16);
-    doc.text(`Daily Rate (Base/30): ₹${salary.dailyRate || 0}`, 320, startY + 32);
-    doc.text(`Hourly Rate (Daily/9): ₹${salary.hourlyRate || 0}`, 320, startY + 48);
+    // Header Divider Line
+    doc.moveTo(35, 94).lineTo(560, 94).strokeColor('#E2E8F0').lineWidth(1).stroke();
 
-    doc.moveDown(5);
+    // --- Employee & Calculation Info Cards ---
+    let y = 104;
 
-    // Table Header
-    const tableTop = doc.y;
-    doc.rect(40, tableTop, 515, 22).fill('#F1F5F9');
-    doc.fillColor('#0F172A').fontSize(10).text('Earnings & Additions', 50, tableTop + 6);
-    doc.text('Amount (₹)', 230, tableTop + 6);
-    doc.text('Deductions & Shortfalls', 310, tableTop + 6);
-    doc.text('Amount (₹)', 480, tableTop + 6);
+    // Card 1: Employee Details (Left Column Box)
+    doc.roundedRect(35, y, 255, 105, 5).fillAndStroke('#F8FAFC', '#E2E8F0');
+    doc.fillColor('#1E293B').fontSize(9.5).font('Helvetica-Bold').text('EMPLOYEE INFORMATION', 45, y + 8);
 
-    let rowY = tableTop + 28;
-    doc.fontSize(9).fillColor('#334155');
+    doc.fontSize(8.5).font('Helvetica');
+    const empDetails = [
+      ['Name:', emp.name || 'N/A'],
+      ['Employee ID:', emp.employeeId || 'N/A'],
+      ['Department:', emp.department || 'General'],
+      ['Designation:', emp.designation || 'Staff'],
+      ['Email:', emp.email || 'N/A'],
+    ];
+    let card1Y = y + 23;
+    empDetails.forEach(([label, val]) => {
+      doc.fillColor('#64748B').font('Helvetica-Bold').text(label, 45, card1Y);
+      doc.fillColor('#0F172A').font('Helvetica').text(val, 125, card1Y, { width: 155, ellipsis: true });
+      card1Y += 14;
+    });
 
-    // Row 1: Base Salary & Absence
-    doc.text('Base Salary', 50, rowY);
-    doc.text(`₹${salary.baseSalary.toLocaleString()}`, 230, rowY);
-    doc.text(`Absence Deduction (${salary.absentDays} days)`, 310, rowY);
-    doc.text(`₹${salary.absenceDeduction.toLocaleString()}`, 480, rowY);
+    // Card 2: Pay Rate Breakdown (Right Column Box)
+    doc.roundedRect(305, y, 255, 105, 5).fillAndStroke('#F8FAFC', '#E2E8F0');
+    doc.fillColor('#1E293B').fontSize(9.5).font('Helvetica-Bold').text('RATE & CALCULATION BASIS', 315, y + 8);
 
-    // Row 2: Overtime & Shortfall
-    rowY += 18;
-    doc.text(`Overtime Pay (${salary.overtimeMinutes} mins)`, 50, rowY);
-    doc.text(`₹${salary.overtimePay.toLocaleString()}`, 230, rowY);
-    doc.text(`Shortfall Deduction (${salary.shortfallMinutes} mins)`, 310, rowY);
-    doc.text(`₹${salary.shortfallDeduction.toLocaleString()}`, 480, rowY);
+    const rateDetails = [
+      ['Base Monthly Salary:', formatCurrency(salary.baseSalary)],
+      ['Daily Rate (Base/30):', formatCurrency(salary.dailyRate)],
+      ['Hourly Rate (Daily/9):', formatCurrency(salary.hourlyRate)],
+      ['Minute Rate:', formatCurrency(salary.minuteRate)],
+      ['Standard Shift:', '9 Hours / Day'],
+    ];
+    let card2Y = y + 23;
+    rateDetails.forEach(([label, val]) => {
+      doc.fillColor('#64748B').font('Helvetica-Bold').text(label, 315, card2Y);
+      doc.fillColor('#0F172A').font('Helvetica').text(val, 425, card2Y, { width: 125, align: 'right' });
+      card2Y += 14;
+    });
 
-    // Row 3: Sunday Work & Advance Loan Recovery
-    rowY += 18;
-    doc.text(`Sunday Work Bonus Pay`, 50, rowY);
-    doc.text(`₹${salary.sundayPay.toLocaleString()}`, 230, rowY);
-    doc.text('Advance Loan Recovery', 310, rowY);
-    doc.text(`₹${salary.advanceDeduction.toLocaleString()}`, 480, rowY);
+    y += 114;
 
-    // Row 4: Performance Bonus
-    rowY += 18;
-    doc.text('Performance Bonus', 50, rowY);
-    doc.text(`₹${salary.bonus.toLocaleString()}`, 230, rowY);
-    doc.text('-', 310, rowY);
-    doc.text('₹0', 480, rowY);
+    // --- Attendance Summary Ribbon ---
+    doc.roundedRect(35, y, 525, 28, 4).fill('#EEF2FF');
+    doc.fillColor('#3730A3').fontSize(8.5).font('Helvetica-Bold');
+    doc.text('ATTENDANCE LOG SUMMARY:', 45, y + 9);
 
-    doc.moveDown(3);
+    doc.fillColor('#1E1B4B').fontSize(8).font('Helvetica');
+    const attSummary = `Present: ${salary.presentDays || 0}d  |  Absent: ${salary.absentDays || 0}d  |  Sundays Worked: ${salary.sundayWorkingDays || 0}d  |  OT: ${salary.overtimeMinutes || 0} mins  |  Shortfall: ${salary.shortfallMinutes || 0} mins`;
+    doc.text(attSummary, 185, y + 9);
 
-    // Net Salary Box
-    const totalBoxY = doc.y + 20;
-    doc.rect(40, totalBoxY, 515, 38).fill('#4F46E5');
-    doc.fillColor('#FFFFFF').fontSize(13).text('NET TAKE-HOME SALARY:', 50, totalBoxY + 11);
-    doc.fontSize(15).text(`₹${salary.netSalary.toLocaleString()}`, 380, totalBoxY + 9, { align: 'right' });
+    y += 36;
 
-    doc.moveDown(4);
-    doc.fontSize(8.5).fillColor('#64748B').text('System-calculated using 9-hour dynamic shift math & minute-level rates.', 40, 750, { align: 'center' });
+    // --- Earnings & Deductions Table Header ---
+    doc.roundedRect(35, y, 525, 22, 4).fill('#0F172A');
+    doc.fillColor('#FFFFFF').fontSize(8.5).font('Helvetica-Bold');
+    doc.text('EARNINGS & ADDITIONS', 45, y + 6);
+    doc.text('AMOUNT', 215, y + 6, { width: 70, align: 'right' });
+    doc.text('DEDUCTIONS & RECOVERIES', 305, y + 6);
+    doc.text('AMOUNT', 475, y + 6, { width: 70, align: 'right' });
+
+    y += 22;
+
+    // Itemized Rows Data
+    const earnings = [
+      { name: 'Base Monthly Salary', amount: salary.baseSalary },
+      { name: `Overtime Pay (${salary.overtimeMinutes || 0} mins)`, amount: salary.overtimePay },
+      { name: `Sunday Bonus Pay (${salary.sundayWorkingDays || 0} days)`, amount: salary.sundayPay },
+      { name: 'Performance Bonus', amount: salary.bonus },
+    ];
+
+    const deductions = [
+      { name: `Absence Deduction (${salary.absentDays || 0} days)`, amount: salary.absenceDeduction },
+      { name: `Shortfall Deduction (${salary.shortfallMinutes || 0} mins)`, amount: salary.shortfallDeduction },
+      { name: 'Advance Loan Recovery', amount: salary.advanceDeduction },
+      { name: 'Other Deductions / Statutory', amount: 0 },
+    ];
+
+    const maxRows = Math.max(earnings.length, deductions.length);
+    let totalEarnings = 0;
+    let totalDeductions = 0;
+
+    doc.font('Helvetica').fontSize(8.5);
+
+    for (let i = 0; i < maxRows; i++) {
+      const e = earnings[i] || { name: '-', amount: 0 };
+      const d = deductions[i] || { name: '-', amount: 0 };
+
+      totalEarnings += e.amount || 0;
+      totalDeductions += d.amount || 0;
+
+      // Row background zebra striping
+      if (i % 2 === 0) {
+        doc.rect(35, y, 525, 20).fill('#F8FAFC');
+      } else {
+        doc.rect(35, y, 525, 20).fill('#FFFFFF');
+      }
+
+      // Divider Line
+      doc.moveTo(35, y + 20).lineTo(560, y + 20).strokeColor('#F1F5F9').lineWidth(0.5).stroke();
+
+      // Earnings Text & Amount
+      doc.fillColor('#334155').text(e.name, 45, y + 5);
+      doc.fillColor(e.amount > 0 ? '#166534' : '#64748B').text(e.amount > 0 ? formatCurrency(e.amount) : 'Rs. 0.00', 175, y + 5, { width: 110, align: 'right' });
+
+      // Deductions Text & Amount
+      doc.fillColor('#334155').text(d.name, 305, y + 5);
+      doc.fillColor(d.amount > 0 ? '#991B1B' : '#64748B').text(d.amount > 0 ? `- ${formatCurrency(d.amount)}` : 'Rs. 0.00', 435, y + 5, { width: 110, align: 'right' });
+
+      y += 20;
+    }
+
+    // --- Subtotals Row ---
+    doc.rect(35, y, 525, 22).fill('#E2E8F0');
+    doc.fillColor('#0F172A').fontSize(8.5).font('Helvetica-Bold');
+    doc.text('TOTAL EARNINGS', 45, y + 6);
+    doc.text(formatCurrency(totalEarnings), 175, y + 6, { width: 110, align: 'right' });
+
+    doc.text('TOTAL DEDUCTIONS', 305, y + 6);
+    doc.text(`- ${formatCurrency(totalDeductions)}`, 435, y + 6, { width: 110, align: 'right' });
+
+    y += 30;
+
+    // --- Net Take Home Banner ---
+    doc.roundedRect(35, y, 525, 42, 6).fill('#1E293B');
+    doc.fillColor('#94A3B8').fontSize(8.5).font('Helvetica-Bold').text('NET TAKE-HOME PAYABLE SALARY', 50, y + 9);
+    doc.fillColor('#CBD5E1').fontSize(7.5).font('Helvetica').text('Formula: Base - Absences + OT - Shortfalls + Sundays + Bonus - Loan Advances', 50, y + 23);
+
+    const netSalaryText = formatCurrency(salary.netSalary);
+    doc.fillColor('#38BDF8').fontSize(15).font('Helvetica-Bold').text(netSalaryText, 340, y + 12, { width: 205, align: 'right' });
+
+    y += 55;
+
+    // --- Signatures & Verification Section ---
+    doc.fontSize(8).font('Helvetica').fillColor('#64748B');
+
+    // Left Box: Employer Signature
+    doc.moveTo(45, y + 30).lineTo(185, y + 30).strokeColor('#CBD5E1').stroke();
+    doc.text('Authorized Employer Signatory', 45, y + 35);
+    doc.text('HR & Payroll Department', 45, y + 45);
+
+    // Right Box: Employee Signature
+    doc.moveTo(415, y + 30).lineTo(555, y + 30).strokeColor('#CBD5E1').stroke();
+    doc.text('Employee Signature', 415, y + 35);
+    doc.text('Date: ________________', 415, y + 45);
+
+    // Footer Disclaimer
+    doc.fontSize(7.5).fillColor('#94A3B8').text(
+      'This document is computer generated using 9-hour dynamic shift math and minute-level precision rates. Does not require physical signature.',
+      35,
+      760,
+      { align: 'center', width: 525 }
+    );
 
     doc.end();
   } catch (error) {
