@@ -228,7 +228,7 @@ export const downloadSalaryPDF = async (req, res, next) => {
     // Card 1: Employee Details (Left Column Box)
     doc.roundedRect(35, y, 255, 105, 5).fillAndStroke('#F8FAFC', '#E2E8F0');
     doc.fillColor('#1E293B').fontSize(9.5).font('Helvetica-Bold').text('EMPLOYEE INFORMATION', 45, y + 8);
-    
+
     doc.fontSize(8.5).font('Helvetica');
     const empDetails = [
       ['Name:', emp.name || 'N/A'],
@@ -268,7 +268,7 @@ export const downloadSalaryPDF = async (req, res, next) => {
     doc.roundedRect(35, y, 525, 28, 4).fill('#EEF2FF');
     doc.fillColor('#3730A3').fontSize(8.5).font('Helvetica-Bold');
     doc.text('ATTENDANCE LOG SUMMARY:', 45, y + 9);
-    
+
     doc.fillColor('#1E1B4B').fontSize(8).font('Helvetica');
     const attSummary = `Present: ${salary.presentDays || 0}d  |  Absent: ${salary.absentDays || 0}d  |  Sundays Worked: ${salary.sundayWorkingDays || 0}d  |  OT: ${salary.overtimeMinutes || 0} mins  |  Shortfall: ${salary.shortfallMinutes || 0} mins`;
     doc.text(attSummary, 185, y + 9);
@@ -357,7 +357,7 @@ export const downloadSalaryPDF = async (req, res, next) => {
 
     // --- Signatures & Verification Section ---
     doc.fontSize(8).font('Helvetica').fillColor('#64748B');
-    
+
     // Left Box: Employer Signature
     doc.moveTo(45, y + 30).lineTo(185, y + 30).strokeColor('#CBD5E1').stroke();
     doc.text('Authorized Employer Signatory', 45, y + 35);
