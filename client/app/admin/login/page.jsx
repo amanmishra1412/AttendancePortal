@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { loginUser, clearError } from '../../../store/slices/authSlice';
-import { Lock, Mail, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
+import { Lock, Mail, ShieldCheck, ArrowRight, Sparkles, HelpCircle } from 'lucide-react';
 import Link from 'next/link';
+import HowItWorksModal from '../../../shared/components/HowItWorksModal';
 
 export default function AdminLoginPage() {
   const dispatch = useDispatch();
@@ -15,6 +16,7 @@ export default function AdminLoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   // Auto-redirect if already logged in as Admin
   useEffect(() => {
@@ -144,12 +146,23 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center border-t border-slate-800 pt-4">
+        <div className="mt-6 text-center border-t border-slate-800 pt-4 flex items-center justify-between">
           <Link href="/" className="text-xs text-slate-400 hover:text-white transition inline-flex items-center gap-1 font-medium">
             &larr; Switch to Employee Portal
           </Link>
+          <button
+            type="button"
+            onClick={() => setHowItWorksOpen(true)}
+            className="text-xs text-indigo-400 hover:text-indigo-300 font-bold inline-flex items-center gap-1.5 transition"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>How It Works?</span>
+          </button>
         </div>
       </div>
+
+      {/* Guide Modal */}
+      <HowItWorksModal isOpen={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
     </div>
   );
 }

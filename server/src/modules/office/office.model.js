@@ -20,15 +20,15 @@ const officeSettingsSchema = new mongoose.Schema(
     },
     workStartTime: {
       type: String,
-      default: '09:00', // 24-hr format
+      default: '10:00', // 10:00 AM (24-hr format)
     },
     workEndTime: {
       type: String,
-      default: '18:00',
+      default: '19:00', // 07:00 PM (24-hr format)
     },
     graceTimeMinutes: {
       type: Number,
-      default: 15,
+      default: 0,
     },
     overtimeRateMultiplier: {
       type: Number,
@@ -36,11 +36,11 @@ const officeSettingsSchema = new mongoose.Schema(
     },
     lateDeductionPerMinute: {
       type: Number,
-      default: 5,
+      default: 0,
     },
     earlyExitDeductionPerMinute: {
       type: Number,
-      default: 5,
+      default: 0,
     },
   },
   { timestamps: true }

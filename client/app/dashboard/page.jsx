@@ -150,13 +150,13 @@ export default function DashboardPage() {
 
           <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-semibold text-slate-500">Remaining Paid Leaves</span>
+              <span className="text-xs font-semibold text-slate-500">Monthly Present Days</span>
               <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600">
                 <CalendarDays className="w-5 h-5" />
               </div>
             </div>
-            <p className="text-3xl font-black text-emerald-600">{stats?.paidLeaveQuota || 0} Days</p>
-            <p className="text-[11px] text-slate-500 mt-2">Annual Leave Balance</p>
+            <p className="text-3xl font-black text-emerald-600">{stats?.presentDaysMonth || 0} Days</p>
+            <p className="text-[11px] text-slate-500 mt-2">Verified Attendance This Month</p>
           </div>
 
           <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">

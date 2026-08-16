@@ -18,9 +18,11 @@ import {
   Sparkles,
   LogOut,
   Menu,
+  HelpCircle,
   X,
 } from 'lucide-react';
 import { fetchMe, logout, fetchPendingApprovals } from '../../store/slices/authSlice';
+import HowItWorksModal from '../../shared/components/HowItWorksModal';
 
 export default function AdminLayout({ children }) {
   const router = useRouter();
@@ -30,6 +32,7 @@ export default function AdminLayout({ children }) {
   const [mounted, setMounted] = useState(false);
   const [authorized, setAuthorized] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -141,8 +144,24 @@ export default function AdminLayout({ children }) {
         })}
       </nav>
 
-      {/* User Info Footer */}
-      <div className="p-3 border-t border-slate-100 bg-slate-50/80 shrink-0">
+      {/* Admin How It Works & User Info Footer */}
+      <div className="p-3 border-t border-slate-100 bg-slate-50/80 shrink-0 space-y-2">
+        <button
+          onClick={() => {
+            setMobileMenuOpen(false);
+            setHowItWorksOpen(true);
+          }}
+          className="w-full flex items-center justify-between p-2.5 rounded-xl bg-indigo-50/80 hover:bg-indigo-100/80 border border-indigo-200/60 text-indigo-900 text-xs font-bold transition group shadow-xs"
+        >
+          <div className="flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-indigo-600 animate-pulse" />
+            <span>How It Works?</span>
+          </div>
+          <span className="text-[10px] bg-indigo-200/60 text-indigo-800 px-1.5 py-0.5 rounded font-bold">
+            Guide
+          </span>
+        </button>
+
         <div className="p-2.5 rounded-xl bg-white border border-slate-200 flex items-center justify-between shadow-xs">
           <div className="flex items-center gap-2.5 overflow-hidden">
             <div className="h-8 w-8 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 flex items-center justify-center font-bold text-white text-xs shrink-0">
@@ -200,6 +219,17 @@ export default function AdminLayout({ children }) {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            {/* How It Works Guide Button */}
+            <button
+              onClick={() => setHowItWorksOpen(true)}
+              className="flex items-center gap-1.5 bg-gradient-to-r from-indigo-50 to-violet-50 hover:from-indigo-100 hover:to-violet-100 text-indigo-700 border border-indigo-200/80 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition shadow-xs"
+              title="Open Software Guide & Walkthrough"
+            >
+              <HelpCircle className="w-4 h-4 text-indigo-600 animate-pulse" />
+              <span className="hidden sm:inline">How It Works</span>
+              <span className="sm:hidden">Guide</span>
+            </button>
+
             <button
               onClick={() => {
                 dispatch(logout());
@@ -215,6 +245,9 @@ export default function AdminLayout({ children }) {
 
         <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto w-full max-w-full">{children}</main>
       </div>
+
+      {/* Guide Modal */}
+      <HowItWorksModal isOpen={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
     </div>
   );
 }
