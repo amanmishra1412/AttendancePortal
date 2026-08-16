@@ -49,19 +49,19 @@ const userSchema = new mongoose.Schema(
     },
     baseSalary: {
       type: Number,
-      default: 50000,
+      default: 15000,
     },
     hourlyRate: {
       type: Number,
-      default: 300,
+      default: 280,
     },
     paidLeaveQuota: {
       type: Number,
-      default: 18,
+      default: 0,
     },
     isEmailVerified: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     otp: {
       type: String,
@@ -73,8 +73,8 @@ const userSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['Pending_OTP', 'Pending_Approval', 'Active', 'Rejected'],
-      default: 'Pending_OTP',
+      enum: ['Pending_Approval', 'Active', 'Rejected', 'Pending_OTP'],
+      default: 'Pending_Approval',
     },
     profileImage: {
       type: String,

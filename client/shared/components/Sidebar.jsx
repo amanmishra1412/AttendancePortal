@@ -11,9 +11,10 @@ import {
   Building2,
   ChevronRight,
   Sparkles,
+  X,
 } from 'lucide-react';
 
-export default function Sidebar() {
+export default function Sidebar({ mobileOpen = false, onClose = () => {} }) {
   const pathname = usePathname();
   const { user } = useSelector((state) => state.auth);
 
@@ -25,20 +26,31 @@ export default function Sidebar() {
     { label: 'Advances & Finance', href: '/finance', icon: Building2 },
   ];
 
-  return (
-    <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between h-screen sticky top-0 text-slate-700 shadow-sm">
+  const sidebarContent = (
+    <div className="flex flex-col justify-between h-full">
       <div>
-        {/* Brand Logo */}
-        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center font-black text-white text-xl justify-center shadow-md shadow-indigo-500/20">
-            HR
+        {/* Brand Logo & Mobile Close Button */}
+        <div className="p-5 sm:p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center font-black text-white text-xl justify-center shadow-md shadow-indigo-500/20 shrink-0">
+              HR
+            </div>
+            <div>
+              <h1 className="font-bold text-slate-900 tracking-wide text-base flex items-center gap-1.5">
+                AttendancePro <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
+              </h1>
+              <p className="text-xs text-slate-500">Employee Workspace</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold text-slate-900 tracking-wide text-base flex items-center gap-1.5">
-              AttendancePro <Sparkles className="w-4 h-4 text-amber-500 fill-amber-500" />
-            </h1>
-            <p className="text-xs text-slate-500">Employee Workspace</p>
-          </div>
+
+          {/* Close button on mobile */}
+          <button
+            onClick={onClose}
+            className="lg:hidden p-2 rounded-xl hover:bg-slate-100 text-slate-500 hover:text-slate-800 transition"
+            aria-label="Close menu"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Navigation Items */}
@@ -50,6 +62,7 @@ export default function Sidebar() {
               <Link
                 key={item.href}
                 href={item.href}
+                onClick={onClose}
                 className={`flex items-center justify-between px-4 py-3 rounded-xl font-medium text-sm transition-all duration-200 ${
                   isActive
                     ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
@@ -70,7 +83,7 @@ export default function Sidebar() {
       {/* User Badge */}
       <div className="p-4 m-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
         <div className="flex items-center gap-3 overflow-hidden">
-          <div className="h-9 w-9 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 flex items-center justify-center font-bold text-white text-sm">
+          <div className="h-9 w-9 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 flex items-center justify-center font-bold text-white text-sm shrink-0">
             {user?.name?.charAt(0) || 'E'}
           </div>
           <div className="truncate">
@@ -81,6 +94,31 @@ export default function Sidebar() {
           </div>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Persistent Sidebar */}
+      <aside className="hidden lg:flex w-64 bg-white border-r border-slate-200 flex-col justify-between h-screen sticky top-0 text-slate-700 shadow-sm shrink-0">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Drawer (Slide-Over) */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          {/* Backdrop Overlay */}
+          <div
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity animate-in fade-in"
+            onClick={onClose}
+          />
+
+          {/* Drawer Panel */}
+          <div className="fixed inset-y-0 left-0 w-72 max-w-[85vw] bg-white shadow-2xl z-50 flex flex-col transition ease-in-out duration-300 animate-in slide-in-from-left">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

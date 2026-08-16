@@ -4,10 +4,10 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { logout } from '../../store/slices/authSlice';
-import { Bell, LogOut, Shield, Clock } from 'lucide-react';
+import { Bell, LogOut, Shield, Clock, Menu } from 'lucide-react';
 import { api } from '../services/api';
 
-export default function Header() {
+export default function Header({ onOpenMobileMenu = () => {} }) {
   const dispatch = useDispatch();
   const router = useRouter();
   const { user } = useSelector((state) => state.auth);
@@ -51,13 +51,23 @@ export default function Header() {
   };
 
   return (
-    <header className="h-20 bg-white/90 backdrop-blur-md border-b border-slate-200 px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
-      {/* Title / Clock */}
-      <div className="flex items-center gap-6">
+    <header className="h-16 sm:h-20 bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 flex items-center justify-between sticky top-0 z-30 shadow-xs">
+      {/* Title / Mobile Hamburger / Clock */}
+      <div className="flex items-center gap-3 sm:gap-6">
+        {/* Hamburger Menu on Mobile */}
+        <button
+          onClick={onOpenMobileMenu}
+          className="lg:hidden p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+          aria-label="Open sidebar menu"
+        >
+          <Menu className="w-5 h-5" />
+        </button>
+
         <div>
-          <h2 className="text-xl font-bold text-slate-900 tracking-tight">Enterprise HR Management</h2>
-          <p className="text-xs text-slate-500">Location-Based Attendance & Automated Payroll</p>
+          <h2 className="text-base sm:text-xl font-bold text-slate-900 tracking-tight line-clamp-1">Enterprise HRMS</h2>
+          <p className="text-[10px] sm:text-xs text-slate-500 hidden sm:block">Location-Based Attendance & Automated Payroll</p>
         </div>
+
         <div className="hidden md:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-700">
           <Clock className="w-3.5 h-3.5 text-indigo-600" />
           <span>{time || 'Loading time...'}</span>
@@ -65,16 +75,16 @@ export default function Header() {
       </div>
 
       {/* Actions & Profile */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 sm:gap-4">
         {/* Notification Bell */}
         <div className="relative">
           <button
             onClick={() => setShowNotifs(!showNotifs)}
-            className="p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition relative border border-slate-200"
+            className="p-2 sm:p-2.5 rounded-xl bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200 transition relative border border-slate-200"
           >
-            <Bell className="w-5 h-5" />
+            <Bell className="w-4 h-4 sm:w-5 sm:h-5" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold h-5 w-5 rounded-full flex items-center justify-center animate-pulse">
+              <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[9px] sm:text-[10px] font-bold h-4 w-4 sm:h-5 sm:w-5 rounded-full flex items-center justify-center animate-pulse">
                 {unreadCount}
               </span>
             )}
@@ -82,10 +92,10 @@ export default function Header() {
 
           {/* Notifications Dropdown */}
           {showNotifs && (
-            <div className="absolute right-0 mt-3 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-4 overflow-hidden">
+            <div className="absolute right-0 mt-3 w-72 sm:w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-4 overflow-hidden">
               <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-2">
-                <h4 className="text-sm font-bold text-slate-900">System Alerts & Notifications</h4>
-                <span className="text-[11px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">
+                <h4 className="text-xs sm:text-sm font-bold text-slate-900">System Alerts & Notifications</h4>
+                <span className="text-[10px] sm:text-[11px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-semibold">
                   {unreadCount} New
                 </span>
               </div>
@@ -122,10 +132,10 @@ export default function Header() {
         {/* Logout Button */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-2 bg-rose-50 hover:bg-rose-100 text-rose-600 px-4 py-2 rounded-xl text-xs font-semibold border border-rose-200 transition"
+          className="flex items-center gap-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-semibold border border-rose-200 transition"
         >
           <LogOut className="w-4 h-4" />
-          <span>Logout</span>
+          <span className="hidden sm:inline">Logout</span>
         </button>
       </div>
     </header>

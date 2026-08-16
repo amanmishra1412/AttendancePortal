@@ -3,9 +3,11 @@ import { Attendance } from '../attendance/attendance.model.js';
 import { Leave } from '../leave/leave.model.js';
 import { Salary } from '../salary/salary.model.js';
 import { Finance } from '../finance/finance.model.js';
+import { autoPunchOutUnclosedAttendances } from '../../common/services/autoPunchOut.service.js';
 
 export const getDashboardStats = async (req, res, next) => {
   try {
+    await autoPunchOutUnclosedAttendances();
     const todayStr = new Date().toISOString().split('T')[0];
     const currentMonth = new Date().getMonth() + 1;
     const currentYear = new Date().getFullYear();

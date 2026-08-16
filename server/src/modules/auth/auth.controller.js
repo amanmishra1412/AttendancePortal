@@ -29,8 +29,6 @@ export const register = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'An account with this email already exists' });
     }
 
-    const otp = generateOTP();
-    const otpExpire = new Date(Date.now() + 10 * 60 * 1000); // 10 mins
     const employeeId = `EMP-${Math.floor(100 + Math.random() * 900)}`;
 
     const newUser = await User.create({
@@ -42,18 +40,22 @@ export const register = async (req, res, next) => {
       department: department || 'Engineering',
       designation: designation || 'Software Associate',
       baseSalary: baseSalary || 50000,
-      isEmailVerified: false,
-      otp,
-      otpExpire,
-      status: 'Pending_OTP',
+      isEmailVerified: true,
+      status: 'Pending_Approval',
     });
 
-    // Send Real OTP Email via Nodemailer
-    await sendOTPEmail({ to: emailLower, name, otp });
+    await logAudit({
+      user: newUser._id,
+      action: 'USER_REGISTER_REQUEST',
+      module: 'Auth',
+      details: `User ${newUser.email} registered (pending admin approval)`,
+      req,
+    });
 
     res.status(201).json({
       success: true,
-      message: 'Account created! A 6-digit verification OTP has been sent to your email address.',
+      message: 'Registration submitted successfully! Your account is pending Admin approval.',
+      pendingApproval: true,
       email: emailLower,
     });
   } catch (error) {
@@ -63,37 +65,9 @@ export const register = async (req, res, next) => {
 
 export const verifyOTP = async (req, res, next) => {
   try {
-    const { email, otp } = req.body;
-    const emailLower = email.toLowerCase().trim();
-
-    const user = await User.findOne({ email: emailLower }).select('+otp +otpExpire');
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User account not found' });
-    }
-
-    if (user.otp !== otp) {
-      return res.status(400).json({ success: false, message: 'Invalid 6-digit OTP code' });
-    }
-
-    user.isEmailVerified = true;
-    user.status = 'Pending_Approval';
-    user.otp = undefined;
-    user.otpExpire = undefined;
-
-    await user.save();
-
-    await logAudit({
-      user: user._id,
-      action: 'VERIFY_OTP',
-      module: 'Auth',
-      details: `User ${user.email} completed email OTP verification`,
-      req,
-    });
-
     res.status(200).json({
       success: true,
-      message: 'Email verified successfully! Your account is now submitted to Admin for approval.',
+      message: 'Email verification is not required. Account is pending Admin approval.',
       status: 'Pending_Approval',
     });
   } catch (error) {
@@ -103,26 +77,9 @@ export const verifyOTP = async (req, res, next) => {
 
 export const resendOTP = async (req, res, next) => {
   try {
-    const { email } = req.body;
-    const emailLower = email.toLowerCase().trim();
-
-    const user = await User.findOne({ email: emailLower });
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'Account not found' });
-    }
-
-    const otp = generateOTP();
-    const otpExpire = new Date(Date.now() + 10 * 60 * 1000);
-
-    user.otp = otp;
-    user.otpExpire = otpExpire;
-    await user.save();
-
-    await sendOTPEmail({ to: emailLower, name: user.name, otp });
-
     res.status(200).json({
       success: true,
-      message: 'A new 6-digit verification code has been sent to your email.',
+      message: 'OTP verification is not required. Your registration is awaiting Admin approval.',
     });
   } catch (error) {
     next(error);
@@ -144,20 +101,11 @@ export const login = async (req, res, next) => {
       return res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
 
-    // Check verification & approval status
-    if (user.status === 'Pending_OTP' || !user.isEmailVerified) {
+    // Check approval status
+    if (user.status === 'Pending_Approval' || user.status === 'Pending_OTP') {
       return res.status(403).json({
         success: false,
-        message: 'Your email address is not verified yet. Please verify your OTP code.',
-        requiresOTP: true,
-        email: user.email,
-      });
-    }
-
-    if (user.status === 'Pending_Approval') {
-      return res.status(403).json({
-        success: false,
-        message: 'Your email is verified! Waiting for Admin Approval before you can log in.',
+        message: 'Your registration request is pending Admin approval. You can log in once an Admin approves your account.',
         pendingApproval: true,
       });
     }
@@ -165,7 +113,14 @@ export const login = async (req, res, next) => {
     if (user.status === 'Rejected') {
       return res.status(403).json({
         success: false,
-        message: 'Your registration request was rejected by Admin.',
+        message: 'Your registration request was rejected by Admin. Please contact HR.',
+      });
+    }
+
+    if (user.status !== 'Active') {
+      return res.status(403).json({
+        success: false,
+        message: 'Your account is currently inactive. Please contact Admin.',
       });
     }
 
@@ -201,7 +156,9 @@ export const login = async (req, res, next) => {
 
 export const getPendingApprovals = async (req, res, next) => {
   try {
-    const pendingUsers = await User.find({ status: 'Pending_Approval' }).sort({ createdAt: -1 });
+    const pendingUsers = await User.find({
+      status: { $in: ['Pending_Approval', 'Pending_OTP'] },
+    }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: pendingUsers.length, users: pendingUsers });
   } catch (error) {
     next(error);

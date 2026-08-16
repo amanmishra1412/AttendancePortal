@@ -12,7 +12,7 @@ import { UserCheck, Check, X, CheckCircle, RefreshCw, Clock, FileText } from 'lu
 
 export default function PendingApprovalsPage() {
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState('regularization'); // default tab
+  const [activeTab, setActiveTab] = useState('registration'); // default to Staff Registrations
 
   const { pendingApprovals, loading: authLoading, message: authMsg, error: authErr } = useSelector((state) => state.auth);
   const {
@@ -68,7 +68,7 @@ export default function PendingApprovalsPage() {
         <div>
           <h1 className="text-2xl font-black text-slate-900">Approvals & Regularization Hub</h1>
           <p className="text-slate-500 text-xs mt-1">
-            Review registration requests & employee attendance regularization corrections
+            Approve newly registered staff accounts & review employee attendance corrections
           </p>
         </div>
         <button
@@ -83,6 +83,27 @@ export default function PendingApprovalsPage() {
       {/* Navigation Tabs */}
       <div className="flex items-center gap-3 border-b border-slate-200 pb-1">
         <button
+          onClick={() => setActiveTab('registration')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition border ${
+            activeTab === 'registration'
+              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20'
+              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+          }`}
+        >
+          <UserCheck className="w-4 h-4" />
+          <span>New Staff Registrations</span>
+          {pendingApprovals?.length > 0 ? (
+            <span className="bg-emerald-400 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full">
+              {pendingApprovals.length} Pending
+            </span>
+          ) : (
+            <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2 py-0.5 rounded-full">
+              0
+            </span>
+          )}
+        </button>
+
+        <button
           onClick={() => setActiveTab('regularization')}
           className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition border ${
             activeTab === 'regularization'
@@ -95,23 +116,6 @@ export default function PendingApprovalsPage() {
           {regularizationRequests?.length > 0 && (
             <span className="bg-amber-400 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full">
               {regularizationRequests.length}
-            </span>
-          )}
-        </button>
-
-        <button
-          onClick={() => setActiveTab('registration')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-bold transition border ${
-            activeTab === 'registration'
-              ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20'
-              : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-          }`}
-        >
-          <UserCheck className="w-4 h-4" />
-          <span>Staff Registrations</span>
-          {pendingApprovals?.length > 0 && (
-            <span className="bg-emerald-400 text-slate-900 text-[10px] font-black px-2 py-0.5 rounded-full">
-              {pendingApprovals.length}
             </span>
           )}
         </button>
@@ -221,7 +225,7 @@ export default function PendingApprovalsPage() {
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <div>
               <h2 className="text-base font-bold text-slate-900">Pending Employee Account Registration Approvals</h2>
-              <p className="text-xs text-slate-500">Review OTP-verified employee signup requests</p>
+              <p className="text-xs text-slate-500">Review and approve new employee registration requests</p>
             </div>
           </div>
 
@@ -231,8 +235,8 @@ export default function PendingApprovalsPage() {
                 <tr>
                   <th className="p-3.5 rounded-l-xl">Employee ID</th>
                   <th className="p-3.5">Name & Email</th>
-                  <th className="p-3.5">Proposed Base Salary</th>
-                  <th className="p-3.5">Email Verification</th>
+                  <th className="p-3.5">Department & Role</th>
+                  <th className="p-3.5">Status</th>
                   <th className="p-3.5 rounded-r-xl text-right">Approval Decision</th>
                 </tr>
               </thead>
@@ -242,7 +246,7 @@ export default function PendingApprovalsPage() {
                     <td colSpan={5} className="text-center py-12 text-slate-400">
                       <UserCheck className="w-10 h-10 text-slate-300 mx-auto mb-2" />
                       <p className="font-semibold text-slate-600">No pending employee registration approvals.</p>
-                      <p className="text-[11px] text-slate-400 mt-1">New registrations verified via OTP will appear here for your review.</p>
+                      <p className="text-[11px] text-slate-400 mt-1">New registrations awaiting admin approval will appear here for your review.</p>
                     </td>
                   </tr>
                 ) : (
@@ -253,10 +257,13 @@ export default function PendingApprovalsPage() {
                         <div className="font-semibold text-slate-900">{emp.name}</div>
                         <div className="text-slate-500 text-[11px]">{emp.email}</div>
                       </td>
-                      <td className="p-3.5 font-bold text-slate-900">₹{emp.baseSalary?.toLocaleString()}</td>
                       <td className="p-3.5">
-                        <span className="bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1">
-                          <Check className="w-3 h-3" /> OTP Verified
+                        <div className="font-semibold text-slate-800">{emp.department || 'Engineering'}</div>
+                        <div className="text-slate-400 text-[11px]">{emp.designation || 'Software Engineer'}</div>
+                      </td>
+                      <td className="p-3.5">
+                        <span className="bg-amber-100 text-amber-800 px-2.5 py-0.5 rounded-full text-[10px] font-bold inline-flex items-center gap-1">
+                          <Clock className="w-3 h-3 text-amber-600" /> Pending Approval
                         </span>
                       </td>
                       <td className="p-3.5 text-right space-x-2">
