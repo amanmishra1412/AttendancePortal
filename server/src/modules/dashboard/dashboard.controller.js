@@ -41,9 +41,16 @@ export const getDashboardStats = async (req, res, next) => {
     } else {
       // Employee Dashboard stats
       const todayAttendance = await Attendance.findOne({ employee: req.user._id, date: todayStr });
-      const employee = await User.findById(req.user._id);
+      
+      const currentMonthAttendances = await Attendance.find({
+        employee: req.user._id,
+        date: { $regex: `^${currentYear}-${String(currentMonth).padStart(2, '0')}` },
+        status: 'Present',
+      });
+      const presentDaysMonth = currentMonthAttendances.length;
 
       const pendingLeaves = await Leave.countDocuments({ employee: req.user._id, status: 'Pending' });
+      const approvedLeaves = await Leave.countDocuments({ employee: req.user._id, status: 'Approved' });
       const lastSalary = await Salary.findOne({ employee: req.user._id }).sort({ year: -1, month: -1 });
 
       return res.status(200).json({
@@ -52,7 +59,8 @@ export const getDashboardStats = async (req, res, next) => {
           todayStatus: todayAttendance ? todayAttendance.status : 'Not Punched In',
           punchInTime: todayAttendance?.punchIn?.timestamp || null,
           punchOutTime: todayAttendance?.punchOut?.timestamp || null,
-          paidLeaveQuota: employee.paidLeaveQuota,
+          presentDaysMonth,
+          approvedLeaves,
           pendingLeaves,
           lastNetSalary: lastSalary ? lastSalary.netSalary : 0,
         },

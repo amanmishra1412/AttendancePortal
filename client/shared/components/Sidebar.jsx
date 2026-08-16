@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSelector } from 'react-redux';
@@ -11,12 +12,15 @@ import {
   Building2,
   ChevronRight,
   Sparkles,
+  HelpCircle,
   X,
 } from 'lucide-react';
+import HowItWorksModal from './HowItWorksModal';
 
 export default function Sidebar({ mobileOpen = false, onClose = () => {} }) {
   const pathname = usePathname();
   const { user } = useSelector((state) => state.auth);
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   const navItems = [
     { label: 'Employee Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -80,17 +84,41 @@ export default function Sidebar({ mobileOpen = false, onClose = () => {} }) {
         </nav>
       </div>
 
-      {/* User Badge */}
-      <div className="p-4 m-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="h-9 w-9 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 flex items-center justify-center font-bold text-white text-sm shrink-0">
-            {user?.name?.charAt(0) || 'E'}
-          </div>
-          <div className="truncate">
-            <p className="text-xs font-semibold text-slate-900 truncate">{user?.name || 'Employee'}</p>
-            <span className="inline-block text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold uppercase">
-              {user?.designation || 'Staff'}
-            </span>
+      <div>
+        {/* How It Works Action Tile */}
+        <div className="px-4 mb-2">
+          <button
+            onClick={() => {
+              if (onClose) onClose();
+              setHowItWorksOpen(true);
+            }}
+            className="w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-indigo-50/80 to-violet-50/80 hover:from-indigo-100 hover:to-violet-100 border border-indigo-200/60 text-indigo-900 text-xs font-bold transition group shadow-xs"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="p-1.5 rounded-lg bg-indigo-600 text-white shadow-xs">
+                <HelpCircle className="w-4 h-4" />
+              </div>
+              <div className="text-left">
+                <p className="font-bold text-slate-900">How It Works?</p>
+                <p className="text-[10px] text-indigo-600 font-medium">Full Software Tour</p>
+              </div>
+            </div>
+            <Sparkles className="w-3.5 h-3.5 text-amber-500 group-hover:scale-110 transition" />
+          </button>
+        </div>
+
+        {/* User Badge */}
+        <div className="p-4 m-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <div className="h-9 w-9 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 flex items-center justify-center font-bold text-white text-sm shrink-0">
+              {user?.name?.charAt(0) || 'E'}
+            </div>
+            <div className="truncate">
+              <p className="text-xs font-semibold text-slate-900 truncate">{user?.name || 'Employee'}</p>
+              <span className="inline-block text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-bold uppercase">
+                {user?.designation || 'Staff'}
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -119,6 +147,8 @@ export default function Sidebar({ mobileOpen = false, onClose = () => {} }) {
           </div>
         </div>
       )}
+
+      <HowItWorksModal isOpen={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
     </>
   );
 }

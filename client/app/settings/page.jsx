@@ -14,12 +14,12 @@ export default function SettingsPage() {
     latitude: 28.6139,
     longitude: 77.209,
     allowedRadiusMeters: 500,
-    workStartTime: '09:00',
-    workEndTime: '18:00',
-    graceTimeMinutes: 15,
+    workStartTime: '10:00',
+    workEndTime: '19:00',
+    graceTimeMinutes: 0,
     overtimeRateMultiplier: 1.5,
-    lateDeductionPerMinute: 5,
-    earlyExitDeductionPerMinute: 5,
+    lateDeductionPerMinute: 0,
+    earlyExitDeductionPerMinute: 0,
   });
 
   useEffect(() => {
@@ -33,12 +33,12 @@ export default function SettingsPage() {
         latitude: settings.latitude || 28.6139,
         longitude: settings.longitude || 77.209,
         allowedRadiusMeters: settings.allowedRadiusMeters || 500,
-        workStartTime: settings.workStartTime || '09:00',
-        workEndTime: settings.workEndTime || '18:00',
-        graceTimeMinutes: settings.graceTimeMinutes || 15,
+        workStartTime: settings.workStartTime || '10:00',
+        workEndTime: settings.workEndTime || '19:00',
+        graceTimeMinutes: settings.graceTimeMinutes ?? 0,
         overtimeRateMultiplier: settings.overtimeRateMultiplier || 1.5,
-        lateDeductionPerMinute: settings.lateDeductionPerMinute || 5,
-        earlyExitDeductionPerMinute: settings.earlyExitDeductionPerMinute || 5,
+        lateDeductionPerMinute: settings.lateDeductionPerMinute ?? 0,
+        earlyExitDeductionPerMinute: settings.earlyExitDeductionPerMinute ?? 0,
       });
     }
   }, [settings]);

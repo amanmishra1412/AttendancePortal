@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { loginUser, registerUser, clearError } from '../store/slices/authSlice';
-import { Mail, Lock, User, Sparkles, ArrowRight, ShieldCheck, AlertCircle, UserCheck } from 'lucide-react';
+import { Mail, Lock, User, Sparkles, ArrowRight, ShieldCheck, AlertCircle, UserCheck, HelpCircle } from 'lucide-react';
+import HowItWorksModal from '../shared/components/HowItWorksModal';
 
 import Link from 'next/link';
 
@@ -15,6 +16,7 @@ export default function HomePage() {
 
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [activeTab, setActiveTab] = useState('login'); // 'login' | 'signup'
+  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   // Login Form
   const [loginEmail, setLoginEmail] = useState('');
@@ -116,7 +118,7 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-1 relative overflow-hidden">
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-between p-4 sm:p-6 relative overflow-hidden">
       {/* Background Decorative Glows */}
       <div className="absolute top-10 left-1/3 w-96 h-96 bg-indigo-200/40 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute bottom-10 right-1/3 w-96 h-96 bg-violet-200/40 rounded-full blur-3xl pointer-events-none"></div>
@@ -132,13 +134,16 @@ export default function HomePage() {
           </span>
         </div>
 
-        {/* <Link
-          href="/admin/login"
-          className="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold border border-slate-200 shadow-xs transition"
-        >
-          <ShieldCheck className="w-4 h-4 text-indigo-600" />
-          <span>Admin Portal &rarr;</span>
-        </Link> */}
+        <div className="flex items-center gap-2.5">
+          {/* How It Works Button */}
+          <button
+            onClick={() => setHowItWorksOpen(true)}
+            className="flex items-center gap-2 bg-gradient-to-r from-indigo-50 to-violet-50 hover:from-indigo-100 hover:to-violet-100 text-indigo-700 px-3.5 py-2 rounded-xl text-xs font-bold border border-indigo-200/80 shadow-xs transition"
+          >
+            <HelpCircle className="w-4 h-4 text-indigo-600 animate-pulse" />
+            <span>How It Works?</span>
+          </button>
+        </div>
       </header>
 
       {/* Main Container */}
@@ -305,9 +310,23 @@ export default function HomePage() {
         )}
       </div>
 
-      <footer className="text-center text-slate-500 text-[11px] relative z-10">
+      {/* Guide Banner */}
+      <div className="max-w-md w-full mx-auto text-center mb-6 relative z-10">
+        <button
+          onClick={() => setHowItWorksOpen(true)}
+          className="inline-flex items-center gap-2 text-xs font-semibold text-indigo-700 bg-indigo-50/80 hover:bg-indigo-100/80 border border-indigo-200/60 px-4 py-2 rounded-full transition shadow-xs"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+          <span>New to AttendancePro? Explore how it works &rarr;</span>
+        </button>
+      </div>
+
+      <footer className="text-center text-slate-500 text-[11px] relative z-10 pb-4">
         Attendance & Payroll Management System &copy; 2026 Enterprise Edition
       </footer>
+
+      {/* Guide Modal */}
+      <HowItWorksModal isOpen={howItWorksOpen} onClose={() => setHowItWorksOpen(false)} />
     </div>
   );
 }

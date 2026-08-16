@@ -22,12 +22,12 @@ const seedData = async () => {
       latitude: 28.6139,
       longitude: 77.209,
       allowedRadiusMeters: 500,
-      workStartTime: '09:00',
-      workEndTime: '18:00',
-      graceTimeMinutes: 15,
+      workStartTime: '10:00',
+      workEndTime: '19:00',
+      graceTimeMinutes: 0,
       overtimeRateMultiplier: 1.5,
-      lateDeductionPerMinute: 5,
-      earlyExitDeductionPerMinute: 5,
+      lateDeductionPerMinute: 0,
+      earlyExitDeductionPerMinute: 0,
     });
 
     console.log('Office Settings Seeded.');
