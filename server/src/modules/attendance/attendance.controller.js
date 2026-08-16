@@ -3,6 +3,7 @@ import { AttendanceRequest } from './attendanceRequest.model.js';
 import { OfficeSettings } from '../office/office.model.js';
 import { calculateDistanceMeters } from '../../common/utils/geo.utils.js';
 import { logAudit } from '../../common/utils/auditLogger.js';
+import { autoPunchOutUnclosedAttendances } from '../../common/services/autoPunchOut.service.js';
 
 export const punchIn = async (req, res, next) => {
   try {
@@ -190,6 +191,7 @@ export const punchOut = async (req, res, next) => {
 
 export const getTodayStatus = async (req, res, next) => {
   try {
+    await autoPunchOutUnclosedAttendances();
     const todayStr = new Date().toISOString().split('T')[0];
     const attendance = await Attendance.findOne({ employee: req.user._id, date: todayStr });
     res.status(200).json({ success: true, attendance: attendance || null });
@@ -200,6 +202,7 @@ export const getTodayStatus = async (req, res, next) => {
 
 export const getAttendanceHistory = async (req, res, next) => {
   try {
+    await autoPunchOutUnclosedAttendances();
     const { employeeId, month, year, date } = req.query;
     let targetEmployeeId = null;
 

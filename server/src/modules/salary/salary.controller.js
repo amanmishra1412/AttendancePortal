@@ -4,9 +4,11 @@ import { User } from '../auth/user.model.js';
 import { Attendance } from '../attendance/attendance.model.js';
 import { Finance } from '../finance/finance.model.js';
 import { logAudit } from '../../common/utils/auditLogger.js';
+import { autoPunchOutUnclosedAttendances } from '../../common/services/autoPunchOut.service.js';
 
 export const generateSalary = async (req, res, next) => {
   try {
+    await autoPunchOutUnclosedAttendances();
     const { month, year, employeeId } = req.body;
 
     const targetMonth = parseInt(month) || new Date().getMonth() + 1;

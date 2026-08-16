@@ -166,15 +166,18 @@ export default function FinancePage() {
         </div>
       </div>
 
-      {/* Disbursal Modal */}
+      {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white border border-slate-200 w-full max-w-md p-6 rounded-3xl space-y-6 shadow-2xl">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-4">
-              <h3 className="font-bold text-slate-900 text-lg">
-                {isAdmin ? 'Disburse Advance Salary / Bonus' : 'New Advance Request'}
-              </h3>
-              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-900">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
+          <div className="bg-white border border-slate-200 w-full max-w-lg p-5 sm:p-6 rounded-3xl space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+              <div>
+                <h3 className="font-bold text-slate-900 text-base sm:text-lg">
+                  {isAdmin ? 'Disburse Advance / Bonus' : 'Request Salary Advance'}
+                </h3>
+                <p className="text-xs text-slate-500">Auto-calculated monthly payroll deductions</p>
+              </div>
+              <button onClick={() => setShowModal(false)} className="text-slate-400 hover:text-slate-900 text-sm p-1 rounded-lg">
                 ✕
               </button>
             </div>

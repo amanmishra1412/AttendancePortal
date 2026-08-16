@@ -30,6 +30,8 @@ export default function MainLayout({ children }) {
     }
   }, [pathname, dispatch, router, isPublicOrAdmin]);
 
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+
   if (!mounted) return null;
 
   if (isPublicOrAdmin) {
@@ -43,10 +45,10 @@ export default function MainLayout({ children }) {
 
   return (
     <div className="flex min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-500 selection:text-white">
-      <Sidebar />
+      <Sidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Header />
-        <main className="p-8 flex-1 overflow-y-auto">{children}</main>
+        <Header onOpenMobileMenu={() => setMobileSidebarOpen(true)} />
+        <main className="p-4 sm:p-6 lg:p-8 flex-1 overflow-y-auto w-full max-w-full">{children}</main>
       </div>
     </div>
   );

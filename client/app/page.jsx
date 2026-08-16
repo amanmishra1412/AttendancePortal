@@ -76,10 +76,8 @@ export default function HomePage() {
         router.push('/dashboard');
       }
     } else if (res.payload) {
-      if (res.payload.requiresOTP) {
-        router.push(`/verify-otp?email=${encodeURIComponent(res.payload.email)}`);
-      } else if (res.payload.pendingApproval) {
-        setInfoMessage('Your email is verified! Waiting for Admin approval before you can log in.');
+      if (res.payload.pendingApproval) {
+        setInfoMessage('Your registration request is pending Admin approval. You will be able to log in once an Admin approves your account.');
       }
     }
   };
@@ -91,7 +89,18 @@ export default function HomePage() {
     const res = await dispatch(registerUser(signupData));
 
     if (res.meta.requestStatus === 'fulfilled') {
-      router.push(`/verify-otp?email=${encodeURIComponent(signupData.email)}`);
+      setLoginEmail(signupData.email);
+      setSignupData({
+        name: '',
+        email: '',
+        password: '',
+        phone: '',
+        department: 'Engineering',
+        designation: 'Software Engineer',
+        baseSalary: 50000,
+      });
+      setActiveTab('login');
+      setInfoMessage('Account registered successfully! Your account is pending Admin approval. You can sign in once approved.');
     }
   };
 
@@ -290,7 +299,7 @@ export default function HomePage() {
               disabled={loading}
               className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-600/20 text-xs transition flex items-center justify-center gap-2 mt-2"
             >
-              {loading ? <span>Sending OTP...</span> : <><span>Create Account & Send Email OTP</span> <ArrowRight className="w-4 h-4" /></>}
+              {loading ? <span>Submitting Registration...</span> : <><span>Submit Registration for Approval</span> <ArrowRight className="w-4 h-4" /></>}
             </button>
           </form>
         )}

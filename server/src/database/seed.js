@@ -44,6 +44,8 @@ const seedData = async () => {
       baseSalary: 120000,
       hourlyRate: 750,
       phone: '+91 98765 43210',
+      status: 'Active',
+      isEmailVerified: true,
     });
 
     console.log('Admin User Seeded (admin@company.com / adminpassword123)');
@@ -61,6 +63,8 @@ const seedData = async () => {
       hourlyRate: 450,
       paidLeaveQuota: 15,
       phone: '+91 98111 22233',
+      status: 'Active',
+      isEmailVerified: true,
     });
 
     const emp2 = await User.create({
@@ -75,6 +79,8 @@ const seedData = async () => {
       hourlyRate: 375,
       paidLeaveQuota: 18,
       phone: '+91 98222 33344',
+      status: 'Active',
+      isEmailVerified: true,
     });
 
     console.log('Sample Employees Seeded (rahul@company.com, priya@company.com / employeepassword123)');

@@ -56,6 +56,8 @@ export const createEmployee = async (req, res, next) => {
       phone,
       baseSalary: baseSalary || 50000,
       hourlyRate: hourlyRate || 300,
+      status: 'Active',
+      isEmailVerified: true,
     });
 
     await logAudit({

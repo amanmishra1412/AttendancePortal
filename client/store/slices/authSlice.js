@@ -143,7 +143,6 @@ const authSlice = createSlice({
       })
       .addCase(registerUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.otpSent = true;
         state.unapprovedEmail = action.payload.email;
         state.message = action.payload.message;
       })
