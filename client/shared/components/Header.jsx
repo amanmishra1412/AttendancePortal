@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { logout } from '../../store/slices/authSlice';
 import { Bell, LogOut, Shield, Clock, Menu, HelpCircle, Sparkles } from 'lucide-react';
 import { api } from '../services/api';
+import { formatTimeIST } from '../utils/dateTime';
 import HowItWorksModal from './HowItWorksModal';
 
 export default function Header({ onOpenMobileMenu = () => {} }) {
@@ -21,7 +22,7 @@ export default function Header({ onOpenMobileMenu = () => {} }) {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setTime(new Date().toLocaleTimeString());
+      setTime(formatTimeIST(new Date(), { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
     }, 1000);
     return () => clearInterval(timer);
   }, []);

@@ -4,13 +4,19 @@ import { OfficeSettings } from '../office/office.model.js';
 import { calculateDistanceMeters } from '../../common/utils/geo.utils.js';
 import { logAudit } from '../../common/utils/auditLogger.js';
 import { autoPunchOutUnclosedAttendances } from '../../common/services/autoPunchOut.service.js';
+import {
+  getISTDateString,
+  getISTDayOfWeek,
+  parseISTDateTime,
+  formatISTTime,
+} from '../../common/utils/timezone.js';
 
 export const punchIn = async (req, res, next) => {
   try {
     const { latitude, longitude } = req.body;
     const userId = req.user._id;
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const todayStr = getISTDateString(now);
 
     if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
       return res.status(400).json({
@@ -46,7 +52,7 @@ export const punchIn = async (req, res, next) => {
 
     // Dynamic 9-Hour Shift End Calculation: Punch In + 9 Hours (540 minutes)
     const expectedPunchOutTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);
-    const isSunday = now.getDay() === 0;
+    const isSunday = getISTDayOfWeek(now) === 0;
 
     const punchInData = {
       timestamp: now,
@@ -78,13 +84,13 @@ export const punchIn = async (req, res, next) => {
       user: userId,
       action: 'PUNCH_IN',
       module: 'Attendance',
-      details: `Punched In at ${now.toLocaleTimeString()} (Shift Target: ${expectedPunchOutTime.toLocaleTimeString()} - 9 Hours)`,
+      details: `Punched In at ${formatISTTime(now)} (Shift Target: ${formatISTTime(expectedPunchOutTime)} - 9 Hours)`,
       req,
     });
 
     res.status(200).json({
       success: true,
-      message: `Punched in successfully! Your 9-hour shift end target is ${expectedPunchOutTime.toLocaleTimeString()}`,
+      message: `Punched in successfully! Your 9-hour shift end target is ${formatISTTime(expectedPunchOutTime)}`,
       attendance,
     });
   } catch (error) {
@@ -97,7 +103,7 @@ export const punchOut = async (req, res, next) => {
     const { latitude, longitude } = req.body;
     const userId = req.user._id;
     const now = new Date();
-    const todayStr = now.toISOString().split('T')[0];
+    const todayStr = getISTDateString(now);
 
     if (latitude === undefined || longitude === undefined || latitude === null || longitude === null) {
       return res.status(400).json({
@@ -175,7 +181,7 @@ export const punchOut = async (req, res, next) => {
       user: userId,
       action: 'PUNCH_OUT',
       module: 'Attendance',
-      details: `Punched out (${totalWorkingMinutes} mins worked. OT: ${overtimeMinutes}m, Shortfall: ${shortfallMinutes}m)`,
+      details: `Punched out at ${formatISTTime(now)} (${totalWorkingMinutes} mins worked. OT: ${overtimeMinutes}m, Shortfall: ${shortfallMinutes}m)`,
       req,
     });
 
@@ -192,7 +198,7 @@ export const punchOut = async (req, res, next) => {
 export const getTodayStatus = async (req, res, next) => {
   try {
     await autoPunchOutUnclosedAttendances();
-    const todayStr = new Date().toISOString().split('T')[0];
+    const todayStr = getISTDateString();
     const attendance = await Attendance.findOne({ employee: req.user._id, date: todayStr });
     res.status(200).json({ success: true, attendance: attendance || null });
   } catch (error) {
@@ -248,7 +254,7 @@ export const getAttendanceHistory = async (req, res, next) => {
       const yearNum = parseInt(year, 10);
       const monthNum = parseInt(month, 10);
       const daysInMonth = new Date(yearNum, monthNum, 0).getDate();
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getISTDateString();
 
       const historyMap = {};
       historyLogs.forEach((log) => {
@@ -259,8 +265,7 @@ export const getAttendanceHistory = async (req, res, next) => {
       // Generate dates from end of month down to 1st (descending)
       for (let d = daysInMonth; d >= 1; d--) {
         const dStr = `${yearNum}-${String(monthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const dayOfWeek = new Date(dStr).getDay();
-        const isSunday = dayOfWeek === 0;
+        const isSunday = getISTDayOfWeek(dStr) === 0;
 
         if (historyMap[dStr]) {
           const logObj = historyMap[dStr].toObject();
@@ -320,10 +325,10 @@ export const submitRegularizationRequest = async (req, res, next) => {
       });
     }
 
-    const punchInDate = new Date(requestedPunchIn);
-    const punchOutDate = new Date(requestedPunchOut);
+    const punchInDate = parseISTDateTime(requestedPunchIn);
+    const punchOutDate = parseISTDateTime(requestedPunchOut);
 
-    if (isNaN(punchInDate.getTime()) || isNaN(punchOutDate.getTime())) {
+    if (!punchInDate || !punchOutDate || isNaN(punchInDate.getTime()) || isNaN(punchOutDate.getTime())) {
       return res.status(400).json({
         success: false,
         message: 'Invalid punch in or punch out date/time format.',
@@ -364,7 +369,7 @@ export const submitRegularizationRequest = async (req, res, next) => {
       user: userId,
       action: 'ATTENDANCE_REGULARIZATION_SUBMITTED',
       module: 'Attendance',
-      details: `Submitted regularization request for date ${date}`,
+      details: `Submitted regularization request for date ${date} (In: ${formatISTTime(punchInDate)}, Out: ${formatISTTime(punchOutDate)})`,
       req,
     });
 
@@ -434,13 +439,12 @@ export const reviewRegularizationRequest = async (req, res, next) => {
     await request.save();
 
     if (status === 'Approved') {
-      const punchInDate = new Date(request.requestedPunchIn);
-      const punchOutDate = new Date(request.requestedPunchOut);
+      const punchInDate = parseISTDateTime(request.requestedPunchIn);
+      const punchOutDate = parseISTDateTime(request.requestedPunchOut);
       const totalWorkingMinutes = Math.max(0, Math.floor((punchOutDate - punchInDate) / 60000));
       const STANDARD_SHIFT_MINUTES = 540; // 9 Hours
 
-      const dayOfWeek = new Date(request.date).getDay();
-      const isSunday = dayOfWeek === 0;
+      const isSunday = getISTDayOfWeek(request.date) === 0;
 
       let overtimeMinutes = 0;
       let shortfallMinutes = 0;

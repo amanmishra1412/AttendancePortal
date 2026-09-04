@@ -16,6 +16,7 @@ import {
   TrendingUp,
   Award,
 } from 'lucide-react';
+import { formatTimeIST, getTodayISTDateString } from '../../../shared/utils/dateTime';
 
 export default function AdminAttendancePage() {
   const [employees, setEmployees] = useState([]);
@@ -84,7 +85,7 @@ export default function AdminAttendancePage() {
   });
 
   // Calculate Metrics
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getTodayISTDateString();
   const presentTodayCount = logs.filter((l) => l.date === todayStr && l.punchIn?.timestamp).length;
   const totalOvertimeMins = filteredLogs.reduce((acc, l) => acc + (l.overtimeMinutes || 0), 0);
   const totalShortfallMins = filteredLogs.reduce((acc, l) => acc + (l.shortfallMinutes || 0), 0);
@@ -321,7 +322,7 @@ export default function AdminAttendancePage() {
                       {item.punchIn?.timestamp ? (
                         <div>
                           <div className="font-semibold text-emerald-700">
-                            {new Date(item.punchIn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {formatTimeIST(item.punchIn.timestamp)}
                           </div>
                           <div className="text-[10px] text-slate-400 font-mono">
                             {item.punchIn.distanceMeters !== undefined ? `${item.punchIn.distanceMeters}m from HQ` : 'GPS Verified'}
@@ -337,7 +338,7 @@ export default function AdminAttendancePage() {
                       {item.punchOut?.timestamp ? (
                         <div>
                           <div className="font-semibold text-rose-700">
-                            {new Date(item.punchOut.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {formatTimeIST(item.punchOut.timestamp)}
                           </div>
                           <div className="text-[10px] text-slate-400 font-mono">
                             {item.punchOut.distanceMeters !== undefined ? `${item.punchOut.distanceMeters}m from HQ` : 'GPS Verified'}
