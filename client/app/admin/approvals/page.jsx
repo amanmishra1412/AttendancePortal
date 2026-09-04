@@ -8,6 +8,7 @@ import {
   reviewRegularization,
   clearAttendanceMessage,
 } from '../../../store/slices/attendanceSlice';
+import { formatTimeIST, formatDateTimeIST } from '../../../shared/utils/dateTime';
 import { UserCheck, Check, X, CheckCircle, RefreshCw, Clock, FileText } from 'lucide-react';
 
 export default function PendingApprovalsPage() {
@@ -181,11 +182,11 @@ export default function PendingApprovalsPage() {
                       <td className="p-3.5">
                         <div className="font-mono text-slate-800">
                           <span className="text-emerald-700 font-semibold">In:</span>{' '}
-                          {new Date(req.requestedPunchIn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {formatTimeIST(req.requestedPunchIn)}
                         </div>
                         <div className="font-mono text-slate-800">
                           <span className="text-rose-700 font-semibold">Out:</span>{' '}
-                          {new Date(req.requestedPunchOut).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {formatTimeIST(req.requestedPunchOut)}
                         </div>
                       </td>
                       <td className="p-3.5 max-w-xs">
@@ -193,8 +194,8 @@ export default function PendingApprovalsPage() {
                           "{req.reason}"
                         </div>
                       </td>
-                      <td className="p-3.5 text-slate-500 font-mono text-[11px]">
-                        {new Date(req.createdAt).toLocaleDateString()} {new Date(req.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      <td className="p-3.5 text-slate-500 font-mono text-[11px] whitespace-nowrap">
+                        {formatDateTimeIST(req.createdAt)}
                       </td>
                       <td className="p-3.5 text-right space-x-2">
                         <button

@@ -8,6 +8,7 @@ import {
   updateLeaveStatusAction,
   clearLeaveStatus,
 } from '../../store/slices/leaveSlice';
+import { formatDateIST } from '../../shared/utils/dateTime';
 import { PlusCircle, CheckCircle, XCircle, Check, X, CalendarDays, Award, Clock } from 'lucide-react';
 
 export default function LeavePage() {
@@ -175,7 +176,7 @@ export default function LeavePage() {
                     )}
                     <td className="p-3.5 font-bold text-indigo-700">{item.leaveType} Leave</td>
                     <td className="p-3.5 text-slate-700 font-mono">
-                      {new Date(item.startDate).toLocaleDateString()} to {new Date(item.endDate).toLocaleDateString()}
+                      {formatDateIST(item.startDate)} to {formatDateIST(item.endDate)}
                     </td>
                     <td className="p-3.5 font-semibold text-slate-900">{item.totalDays} day(s)</td>
                     <td className="p-3.5 text-slate-600 max-w-xs truncate">{item.reason}</td>

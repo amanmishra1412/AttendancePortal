@@ -10,6 +10,12 @@ import {
   clearAttendanceMessage,
   submitRegularization,
 } from '../../store/slices/attendanceSlice';
+import {
+  formatTimeIST,
+  formatDateIST,
+  getISTTimeInputString,
+  toISTISOString,
+} from '../../shared/utils/dateTime';
 import { fetchOfficeSettings } from '../../store/slices/officeSlice';
 import {
   Clock,
@@ -70,7 +76,7 @@ export default function AttendancePage() {
     dispatch(fetchAttendanceHistory({ month: selectedMonth, year: selectedYear }));
 
     const timer = setInterval(() => {
-      setTime(new Date().toLocaleTimeString());
+      setTime(formatTimeIST(new Date(), { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
     }, 1000);
     return () => clearInterval(timer);
   }, [dispatch, selectedMonth, selectedYear]);
@@ -131,21 +137,15 @@ export default function AttendancePage() {
     setModalError('');
     setReason('');
 
-    // Pre-fill time if exists
+    // Pre-fill time if exists (in IST)
     if (item.punchIn?.timestamp) {
-      const d = new Date(item.punchIn.timestamp);
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mm = String(d.getMinutes()).padStart(2, '0');
-      setPunchInTime(`${hh}:${mm}`);
+      setPunchInTime(getISTTimeInputString(item.punchIn.timestamp) || '09:30');
     } else {
       setPunchInTime('09:30');
     }
 
     if (item.punchOut?.timestamp) {
-      const d = new Date(item.punchOut.timestamp);
-      const hh = String(d.getHours()).padStart(2, '0');
-      const mm = String(d.getMinutes()).padStart(2, '0');
-      setPunchOutTime(`${hh}:${mm}`);
+      setPunchOutTime(getISTTimeInputString(item.punchOut.timestamp) || '18:30');
     } else {
       setPunchOutTime('18:30');
     }
@@ -162,8 +162,8 @@ export default function AttendancePage() {
       return;
     }
 
-    const requestedPunchIn = `${selectedRecord.date}T${punchInTime}:00`;
-    const requestedPunchOut = `${selectedRecord.date}T${punchOutTime}:00`;
+    const requestedPunchIn = toISTISOString(selectedRecord.date, punchInTime);
+    const requestedPunchOut = toISTISOString(selectedRecord.date, punchOutTime);
 
     if (new Date(requestedPunchOut) <= new Date(requestedPunchIn)) {
       setModalError('Punch Out time must be after Punch In time.');
@@ -247,7 +247,7 @@ export default function AttendancePage() {
               </span>
             </div>
             <span className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-mono font-semibold">
-              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+              {formatDateIST(new Date(), { weekday: 'short', month: 'short', day: 'numeric' })}
             </span>
           </div>
 
@@ -258,9 +258,9 @@ export default function AttendancePage() {
             </div>
             {today?.punchIn?.timestamp ? (
               <div className="mt-3 p-3 bg-indigo-50 border border-indigo-100 rounded-2xl inline-block text-xs font-medium text-indigo-900">
-                <span>Punched In at {new Date(today.punchIn.timestamp).toLocaleTimeString()}</span> &rarr;{' '}
+                <span>Punched In at {formatTimeIST(today.punchIn.timestamp)}</span> &rarr;{' '}
                 <span className="font-bold text-indigo-700">
-                  Required 9-Hour Shift End: {new Date(today.expectedPunchOutTime || new Date(today.punchIn.timestamp).getTime() + 9*3600000).toLocaleTimeString()}
+                  Required 9-Hour Shift End: {formatTimeIST(today.expectedPunchOutTime || new Date(today.punchIn.timestamp).getTime() + 9*3600000)}
                 </span>
               </div>
             ) : (
@@ -284,7 +284,7 @@ export default function AttendancePage() {
                 <div className="text-base leading-none">PUNCH IN</div>
                 <div className="text-[10px] font-normal opacity-90 mt-1">
                   {today?.punchIn?.timestamp
-                    ? `Punched at ${new Date(today.punchIn.timestamp).toLocaleTimeString()}`
+                    ? `Punched at ${formatTimeIST(today.punchIn.timestamp)}`
                     : !isInsideOffice
                     ? 'Requires Office Location'
                     : 'Start 9-Hour Shift'}
@@ -306,7 +306,7 @@ export default function AttendancePage() {
                 <div className="text-base leading-none">PUNCH OUT</div>
                 <div className="text-[10px] font-normal opacity-90 mt-1">
                   {today?.punchOut?.timestamp
-                    ? `Punched out at ${new Date(today.punchOut.timestamp).toLocaleTimeString()}`
+                    ? `Punched out at ${formatTimeIST(today.punchOut.timestamp)}`
                     : !isInsideOffice
                     ? 'Requires Office Location'
                     : 'End 9-Hour Shift'}
@@ -452,14 +452,10 @@ export default function AttendancePage() {
                         {item.date} {item.isSunday && <span className="text-amber-600 font-bold text-[10px]">(SUN)</span>}
                       </td>
                       <td className="p-3.5 text-slate-800 font-medium">
-                        {item.punchIn?.timestamp
-                          ? new Date(item.punchIn.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                          : '-'}
+                        {item.punchIn?.timestamp ? formatTimeIST(item.punchIn.timestamp) : '-'}
                       </td>
                       <td className="p-3.5 text-slate-800 font-medium">
-                        {item.punchOut?.timestamp
-                          ? new Date(item.punchOut.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                          : '-'}
+                        {item.punchOut?.timestamp ? formatTimeIST(item.punchOut.timestamp) : '-'}
                       </td>
                       <td className="p-3.5 font-bold text-indigo-700">
                         {Math.floor((item.totalWorkingMinutes || 0) / 60)}h {(item.totalWorkingMinutes || 0) % 60}m

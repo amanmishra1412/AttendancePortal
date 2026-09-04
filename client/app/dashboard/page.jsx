@@ -16,6 +16,7 @@ import {
   AlertCircle,
   FileText,
 } from 'lucide-react';
+import { formatTimeIST } from '../../shared/utils/dateTime';
 
 export default function DashboardPage() {
   const { user } = useSelector((state) => state.auth);
@@ -144,7 +145,7 @@ export default function DashboardPage() {
               {stats?.todayStatus || 'Not Punched'}
             </p>
             <p className="text-[11px] text-slate-500 mt-2">
-              {stats?.punchInTime ? `Punched at ${new Date(stats.punchInTime).toLocaleTimeString()}` : 'Awaiting Punch In'}
+              {stats?.punchInTime ? `Punched at ${formatTimeIST(stats.punchInTime)}` : 'Awaiting Punch In'}
             </p>
           </div>
 

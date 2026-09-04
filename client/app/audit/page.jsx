@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../shared/services/api';
 import { ShieldAlert, RefreshCw } from 'lucide-react';
+import { formatDateTimeIST } from '../../shared/utils/dateTime';
 
 export default function AuditPage() {
   const [logs, setLogs] = useState([]);
@@ -65,7 +66,7 @@ export default function AuditPage() {
               ) : (
                 logs.map((item) => (
                   <tr key={item._id} className="hover:bg-slate-50 transition">
-                    <td className="p-3.5 text-slate-500">{new Date(item.createdAt).toLocaleString()}</td>
+                    <td className="p-3.5 text-slate-500 whitespace-nowrap">{formatDateTimeIST(item.createdAt)}</td>
                     <td className="p-3.5 text-slate-900 font-sans font-semibold">
                       {item.user?.name || 'System'}{' '}
                       {item.user?.email && <span className="text-slate-400 font-mono text-[10px]">({item.user.email})</span>}

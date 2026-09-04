@@ -1,20 +1,23 @@
 import { Attendance } from '../../modules/attendance/attendance.model.js';
 import { logAudit } from '../utils/auditLogger.js';
+import {
+  getISTDateString,
+  getISTHours,
+  getISTMinutes,
+  getISTEndOfDay,
+} from '../utils/timezone.js';
 
 /**
  * Automatically punches out any employee attendance where punchIn exists
- * but punchOut is missing, at 23:59 (1 minute before midnight / end of day).
+ * but punchOut is missing, at 23:59 (1 minute before midnight / end of day in IST).
  */
 export const autoPunchOutUnclosedAttendances = async () => {
   try {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const todayStr = `${year}-${month}-${day}`;
+    const todayStr = getISTDateString(now);
 
-    const currentHours = now.getHours();
-    const currentMinutes = now.getMinutes();
+    const currentHours = getISTHours(now);
+    const currentMinutes = getISTMinutes(now);
 
     // Find all attendance records where punchIn exists but punchOut is null or missing
     const unclosedRecords = await Attendance.find({
@@ -37,10 +40,8 @@ export const autoPunchOutUnclosedAttendances = async () => {
       const isTodayEndOfDay = record.date === todayStr && (currentHours === 23 && currentMinutes >= 59);
 
       if (isPastDate || isTodayEndOfDay) {
-        const [rYear, rMonth, rDay] = record.date.split('-').map(Number);
-
-        // Exact 23:59:00 on the attendance record's calendar date
-        const endOfDay = new Date(rYear, rMonth - 1, rDay, 23, 59, 0, 0);
+        // Exact 23:59:00 IST on the attendance record's calendar date
+        const endOfDay = getISTEndOfDay(record.date);
         const punchInTime = new Date(record.punchIn.timestamp);
 
         let validEndTime = endOfDay;

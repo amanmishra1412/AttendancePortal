@@ -1,3 +1,4 @@
+process.env.TZ = 'Asia/Kolkata';
 import app from './app.js';
 import { config } from './config/index.js';
 import { connectDB } from './database/db.js';
