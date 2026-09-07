@@ -52,6 +52,14 @@ const attendanceSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isHoliday: {
+      type: Boolean,
+      default: false,
+    },
+    holidayName: {
+      type: String,
+      default: '',
+    },
     status: {
       type: String,
       enum: ['Present', 'Absent', 'Half-Day', 'On-Leave', 'Holiday'],

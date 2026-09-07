@@ -1,6 +1,7 @@
 import { Attendance } from './attendance.model.js';
 import { AttendanceRequest } from './attendanceRequest.model.js';
 import { OfficeSettings } from '../office/office.model.js';
+import { Holiday } from '../holiday/holiday.model.js';
 import { calculateDistanceMeters } from '../../common/utils/geo.utils.js';
 import { logAudit } from '../../common/utils/auditLogger.js';
 import { autoPunchOutUnclosedAttendances } from '../../common/services/autoPunchOut.service.js';
@@ -54,6 +55,10 @@ export const punchIn = async (req, res, next) => {
     const expectedPunchOutTime = new Date(now.getTime() + 9 * 60 * 60 * 1000);
     const isSunday = getISTDayOfWeek(now) === 0;
 
+    const todayHoliday = await Holiday.findOne({ date: todayStr });
+    const isHoliday = !!todayHoliday;
+    const holidayName = todayHoliday ? todayHoliday.name : '';
+
     const punchInData = {
       timestamp: now,
       latitude,
@@ -70,12 +75,16 @@ export const punchIn = async (req, res, next) => {
         punchIn: punchInData,
         expectedPunchOutTime,
         isSunday,
+        isHoliday,
+        holidayName,
         status: 'Present',
       });
     } else {
       attendance.punchIn = punchInData;
       attendance.expectedPunchOutTime = expectedPunchOutTime;
       attendance.isSunday = isSunday;
+      attendance.isHoliday = isHoliday;
+      attendance.holidayName = holidayName;
       attendance.status = 'Present';
       await attendance.save();
     }
@@ -84,7 +93,7 @@ export const punchIn = async (req, res, next) => {
       user: userId,
       action: 'PUNCH_IN',
       module: 'Attendance',
-      details: `Punched In at ${formatISTTime(now)} (Shift Target: ${formatISTTime(expectedPunchOutTime)} - 9 Hours)`,
+      details: `Punched In at ${formatISTTime(now)} (Shift Target: ${formatISTTime(expectedPunchOutTime)} - 9 Hours)${isHoliday ? ` [Holiday: ${holidayName}]` : ''}`,
       req,
     });
 
@@ -234,19 +243,28 @@ export const getAttendanceHistory = async (req, res, next) => {
       .populate('employee', 'name employeeId email department designation')
       .sort({ date: -1 });
 
-    // Fetch regularization requests for this query scope
+    // Fetch regularization requests and holidays for this query scope
     let reqQuery = {};
+    let holQuery = {};
     if (targetEmployeeId) reqQuery.employee = targetEmployeeId;
     if (date) {
       reqQuery.date = date;
+      holQuery.date = date;
     } else if (month && year) {
       const monthFormatted = String(month).padStart(2, '0');
       reqQuery.date = { $regex: `^${year}-${monthFormatted}` };
+      holQuery.date = { $regex: `^${year}-${monthFormatted}` };
     }
     const regularizationRequests = await AttendanceRequest.find(reqQuery);
     const reqMap = {};
     regularizationRequests.forEach((r) => {
       reqMap[r.date] = r;
+    });
+
+    const holidaysList = await Holiday.find(holQuery);
+    const holMap = {};
+    holidaysList.forEach((h) => {
+      holMap[h.date] = h;
     });
 
     // If fetching for a specific employee and specific month & year, build full month calendar dates
@@ -266,15 +284,24 @@ export const getAttendanceHistory = async (req, res, next) => {
       for (let d = daysInMonth; d >= 1; d--) {
         const dStr = `${yearNum}-${String(monthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
         const isSunday = getISTDayOfWeek(dStr) === 0;
+        const holidayItem = holMap[dStr];
+        const isHoliday = !!holidayItem;
+        const holidayName = holidayItem ? holidayItem.name : '';
 
         if (historyMap[dStr]) {
           const logObj = historyMap[dStr].toObject();
           logObj.regularizationRequest = reqMap[dStr] || null;
+          if (isHoliday) {
+            logObj.isHoliday = true;
+            logObj.holidayName = holidayName;
+          }
           fullHistory.push(logObj);
         } else {
           // No record exists in DB
           let status = 'Absent';
-          if (isSunday) {
+          if (isHoliday) {
+            status = 'Holiday';
+          } else if (isSunday) {
             status = 'Sunday';
           } else if (dStr > todayStr) {
             status = '-';
@@ -290,6 +317,8 @@ export const getAttendanceHistory = async (req, res, next) => {
             overtimeMinutes: 0,
             shortfallMinutes: 0,
             isSunday,
+            isHoliday,
+            holidayName,
             status,
             isPlaceholder: true,
             regularizationRequest: reqMap[dStr] || null,
@@ -300,10 +329,14 @@ export const getAttendanceHistory = async (req, res, next) => {
       return res.status(200).json({ success: true, count: fullHistory.length, history: fullHistory });
     }
 
-    // Otherwise, attach regularization requests to history logs
+    // Otherwise, attach regularization requests and holidays to history logs
     const historyWithReqs = historyLogs.map((log) => {
       const logObj = log.toObject();
       logObj.regularizationRequest = reqMap[log.date] || null;
+      if (holMap[log.date]) {
+        logObj.isHoliday = true;
+        logObj.holidayName = holMap[log.date].name;
+      }
       return logObj;
     });
 

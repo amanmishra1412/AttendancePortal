@@ -31,6 +31,26 @@ const salarySchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    totalDaysInMonth: {
+      type: Number,
+      default: 30,
+    },
+    workingDays: {
+      type: Number,
+      default: 0,
+    },
+    sundaysCount: {
+      type: Number,
+      default: 0,
+    },
+    holidaysCount: {
+      type: Number,
+      default: 0,
+    },
+    paidLeaveDays: {
+      type: Number,
+      default: 0,
+    },
     presentDays: {
       type: Number,
       default: 0,

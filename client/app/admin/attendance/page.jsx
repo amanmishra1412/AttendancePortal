@@ -310,6 +310,11 @@ export default function AdminAttendancePage() {
                     {/* Date */}
                     <td className="p-3.5 font-mono text-slate-700">
                       <div>{item.date}</div>
+                      {item.isHoliday && (
+                        <span className="inline-block mt-0.5 text-[9px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded border border-purple-200">
+                          🎉 {item.holidayName ? item.holidayName.toUpperCase() : 'HOLIDAY'}
+                        </span>
+                      )}
                       {item.isSunday && (
                         <span className="inline-block mt-0.5 text-[9px] bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded">
                           SUNDAY WORK
