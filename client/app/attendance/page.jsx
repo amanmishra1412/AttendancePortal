@@ -481,6 +481,10 @@ export default function AttendancePage() {
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
                             <CheckCircle className="w-3 h-3 text-emerald-600" /> Regularized
                           </span>
+                        ) : item.status === 'Holiday' || item.isHoliday ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                            <span>🎉</span> {item.holidayName ? `Holiday: ${item.holidayName}` : 'Paid Holiday'}
+                          </span>
                         ) : item.status === 'Present' ? (
                           <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
                             <CheckCircle className="w-3 h-3" /> Present

@@ -94,9 +94,9 @@ export default function SalaryPage() {
             <Calculator className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="font-bold text-slate-900 text-sm">Minute-Level Math Standard</h3>
+            <h3 className="font-bold text-slate-900 text-sm">Minute-Level Math Standard & Paid Holiday Protection</h3>
             <p className="text-xs text-slate-600">
-              Daily Rate = Base / 30 | Hourly Rate = Daily / 9 | Minute Rate = Hourly / 60
+              Daily Rate = Base / 30 | Sundays & Official Holidays (Diwali, Raksha Bandhan, etc.) are 100% Paid with ZERO deductions
             </p>
           </div>
         </div>
@@ -134,11 +134,12 @@ export default function SalaryPage() {
               <tr>
                 {isAdmin && <th className="p-3.5 rounded-l-xl">Employee</th>}
                 <th className="p-3.5">Base Salary</th>
-                <th className="p-3.5">Daily / Hourly Rate</th>
+                <th className="p-3.5">Rate & Workdays</th>
+                <th className="p-3.5">Attendance & Holidays</th>
                 <th className="p-3.5">Overtime Pay</th>
                 <th className="p-3.5">Shortfall / Absence</th>
                 <th className="p-3.5">Sunday Work</th>
-                <th className="p-3.5">Advance Loan Recovery</th>
+                <th className="p-3.5">Advance Recovery</th>
                 <th className="p-3.5 font-bold">Net Salary</th>
                 <th className="p-3.5 rounded-r-xl text-right">PDF Slip</th>
               </tr>
@@ -146,7 +147,7 @@ export default function SalaryPage() {
             <tbody className="divide-y divide-slate-100">
               {salaries.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 9 : 8} className="text-center py-10 text-slate-400">
+                  <td colSpan={isAdmin ? 10 : 9} className="text-center py-10 text-slate-400">
                     No salary calculation records found for this period. Click "Run Payroll" to generate.
                   </td>
                 </tr>
@@ -161,11 +162,27 @@ export default function SalaryPage() {
                     <td className="p-3.5 text-slate-900 font-bold">₹{s.baseSalary?.toLocaleString()}</td>
                     <td className="p-3.5 text-slate-600">
                       <div>₹{s.dailyRate || Math.round(s.baseSalary / 30)}/day</div>
-                      <div className="text-[10px] text-slate-400">₹{s.hourlyRate || Math.round(s.baseSalary / 270)}/hr</div>
+                      <div className="text-[10px] text-slate-400 font-semibold">{s.workingDays ? `${s.workingDays} Workdays` : '30 Days Basis'}</div>
+                    </td>
+                    <td className="p-3.5 text-slate-700">
+                      <div className="font-semibold text-slate-900">
+                        Present: <span className="text-indigo-600 font-bold">{s.presentDays || 0}d</span>
+                      </div>
+                      <div className="text-[10px] text-emerald-600 font-bold flex items-center gap-1">
+                        🎉 Holidays: {s.holidaysCount || 0}d (Paid)
+                      </div>
+                      {s.absentDays > 0 && (
+                        <div className="text-[10px] text-rose-500 font-semibold">
+                          Absent: {s.absentDays}d
+                        </div>
+                      )}
                     </td>
                     <td className="p-3.5 text-emerald-600 font-bold">+₹{s.overtimePay?.toLocaleString()}</td>
                     <td className="p-3.5 text-rose-600 font-bold">
                       -₹{((s.shortfallDeduction || 0) + (s.absenceDeduction || 0)).toLocaleString()}
+                      {s.absenceDeduction > 0 && (
+                        <div className="text-[10px] text-slate-400 font-normal">Absence: ₹{s.absenceDeduction}</div>
+                      )}
                     </td>
                     <td className="p-3.5 text-amber-700 font-bold">+₹{(s.sundayPay || 0).toLocaleString()}</td>
                     <td className="p-3.5 text-slate-700 font-semibold">-₹{(s.advanceDeduction || 0).toLocaleString()}</td>

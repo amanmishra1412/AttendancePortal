@@ -3,8 +3,11 @@ import { Salary } from './salary.model.js';
 import { User } from '../auth/user.model.js';
 import { Attendance } from '../attendance/attendance.model.js';
 import { Finance } from '../finance/finance.model.js';
+import { Holiday } from '../holiday/holiday.model.js';
+import { Leave } from '../leave/leave.model.js';
 import { logAudit } from '../../common/utils/auditLogger.js';
 import { autoPunchOutUnclosedAttendances } from '../../common/services/autoPunchOut.service.js';
+import { getISTDayOfWeek } from '../../common/utils/timezone.js';
 
 export const generateSalary = async (req, res, next) => {
   try {
@@ -24,6 +27,31 @@ export const generateSalary = async (req, res, next) => {
     } else {
       employees = await User.find({ status: 'Active', role: 'Employee' });
     }
+
+    // Fetch Paid Holidays for Target Month
+    const holidays = await Holiday.find({
+      date: { $regex: `^${monthPrefix}` },
+      isPaid: true,
+    });
+    const holidayDateMap = {};
+    holidays.forEach((h) => {
+      holidayDateMap[h.date] = h;
+    });
+
+    // Calculate Sundays and Holidays in Month
+    let sundaysCount = 0;
+    let holidaysCount = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dStr = `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isSun = getISTDayOfWeek(dStr) === 0;
+      if (isSun) {
+        sundaysCount++;
+      } else if (holidayDateMap[dStr]) {
+        holidaysCount++;
+      }
+    }
+
+    const workingDays = Math.max(0, daysInMonth - sundaysCount - holidaysCount);
 
     const generatedSalaries = [];
 
@@ -62,15 +90,43 @@ export const generateSalary = async (req, res, next) => {
         }
       });
 
-      // Calculate Sundays & Workdays in Month
-      let sundaysCount = 0;
+      // Fetch approved Paid/Sick/Casual leaves for employee in this month
+      const startOfMonth = new Date(targetYear, targetMonth - 1, 1, 0, 0, 0);
+      const endOfMonth = new Date(targetYear, targetMonth, 0, 23, 59, 59, 999);
+
+      const approvedLeaves = await Leave.find({
+        employee: emp._id,
+        status: 'Approved',
+        leaveType: { $in: ['Paid', 'Sick', 'Casual'] },
+        $or: [
+          { startDate: { $lte: endOfMonth }, endDate: { $gte: startOfMonth } },
+        ],
+      });
+
+      // Calculate paid leave days falling on regular working days in this month
+      let paidLeaveDays = 0;
       for (let day = 1; day <= daysInMonth; day++) {
-        const d = new Date(targetYear, targetMonth - 1, day);
-        if (d.getDay() === 0) sundaysCount++;
+        const dStr = `${targetYear}-${String(targetMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isSun = getISTDayOfWeek(dStr) === 0;
+        const isHol = !!holidayDateMap[dStr];
+        // Only count leave if it's a regular working day (not already Sunday or Holiday)
+        if (!isSun && !isHol) {
+          const currentDayDate = new Date(targetYear, targetMonth - 1, day, 12, 0, 0);
+          const hasLeave = approvedLeaves.some((l) => {
+            const lStart = new Date(l.startDate);
+            lStart.setHours(0, 0, 0, 0);
+            const lEnd = new Date(l.endDate);
+            lEnd.setHours(23, 59, 59, 999);
+            return currentDayDate >= lStart && currentDayDate <= lEnd;
+          });
+          if (hasLeave) {
+            paidLeaveDays++;
+          }
+        }
       }
 
-      // Absences on regular workdays
-      const absentDays = Math.max(0, (daysInMonth - sundaysCount) - presentDays);
+      // Absences on regular workdays (Official Holidays & Sundays are NEVER deducted)
+      const absentDays = Math.max(0, workingDays - presentDays - paidLeaveDays);
       const absenceDeduction = Math.round(absentDays * dailyRate);
 
       // Overtime & Shortfall Math
@@ -119,6 +175,11 @@ export const generateSalary = async (req, res, next) => {
           dailyRate,
           hourlyRate,
           minuteRate,
+          totalDaysInMonth: daysInMonth,
+          workingDays,
+          sundaysCount,
+          holidaysCount,
+          paidLeaveDays,
           presentDays,
           absentDays,
           sundayWorkingDays,
@@ -267,15 +328,15 @@ export const downloadSalaryPDF = async (req, res, next) => {
     y += 114;
 
     // --- Attendance Summary Ribbon ---
-    doc.roundedRect(35, y, 525, 28, 4).fill('#EEF2FF');
+    doc.roundedRect(35, y, 525, 32, 4).fill('#EEF2FF');
     doc.fillColor('#3730A3').fontSize(8.5).font('Helvetica-Bold');
-    doc.text('ATTENDANCE LOG SUMMARY:', 45, y + 9);
+    doc.text('ATTENDANCE LOG SUMMARY:', 45, y + 11);
 
-    doc.fillColor('#1E1B4B').fontSize(8).font('Helvetica');
-    const attSummary = `Present: ${salary.presentDays || 0}d  |  Absent: ${salary.absentDays || 0}d  |  Sundays Worked: ${salary.sundayWorkingDays || 0}d  |  OT: ${salary.overtimeMinutes || 0} mins  |  Shortfall: ${salary.shortfallMinutes || 0} mins`;
-    doc.text(attSummary, 185, y + 9);
+    doc.fillColor('#1E1B4B').fontSize(7.5).font('Helvetica');
+    const attSummary = `Workdays: ${salary.workingDays || 0}d | Present: ${salary.presentDays || 0}d | Holidays: ${salary.holidaysCount || 0}d (Paid) | Leaves: ${salary.paidLeaveDays || 0}d | Sundays: ${salary.sundaysCount || 0}d | Absent: ${salary.absentDays || 0}d | OT: ${salary.overtimeMinutes || 0}m`;
+    doc.text(attSummary, 175, y + 11, { width: 375, ellipsis: true });
 
-    y += 36;
+    y += 40;
 
     // --- Earnings & Deductions Table Header ---
     doc.roundedRect(35, y, 525, 22, 4).fill('#0F172A');

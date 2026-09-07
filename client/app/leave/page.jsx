@@ -9,7 +9,21 @@ import {
   clearLeaveStatus,
 } from '../../store/slices/leaveSlice';
 import { formatDateIST } from '../../shared/utils/dateTime';
-import { PlusCircle, CheckCircle, XCircle, Check, X, CalendarDays, Award, Clock } from 'lucide-react';
+import { api } from '../../shared/services/api';
+import {
+  PlusCircle,
+  CheckCircle,
+  XCircle,
+  Check,
+  X,
+  CalendarDays,
+  Award,
+  Clock,
+  PartyPopper,
+  Sparkles,
+  Gift,
+  ShieldCheck,
+} from 'lucide-react';
 
 export default function LeavePage() {
   const dispatch = useDispatch();
@@ -18,6 +32,8 @@ export default function LeavePage() {
 
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [filterStatus, setFilterStatus] = useState('');
+  const [holidays, setHolidays] = useState([]);
+  const [holidaysLoading, setHolidaysLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     leaveType: 'Unpaid',
@@ -26,8 +42,20 @@ export default function LeavePage() {
     reason: '',
   });
 
+  const fetchHolidaysList = async () => {
+    try {
+      const res = await api.get('/holidays');
+      setHolidays(res.data.holidays || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setHolidaysLoading(false);
+    }
+  };
+
   useEffect(() => {
     dispatch(fetchLeaves({ status: filterStatus }));
+    fetchHolidaysList();
   }, [dispatch, filterStatus]);
 
   const handleApply = async (e) => {
@@ -45,14 +73,18 @@ export default function LeavePage() {
 
   const isAdmin = user?.role === 'Admin';
 
+  const upcomingHolidays = holidays.slice(0, 8);
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 font-sans">Leave Management & Official Holidays</h1>
+          <h1 className="text-2xl font-black text-slate-900 font-sans flex items-center gap-2">
+            <span>Leave Management & Official Holidays</span>
+          </h1>
           <p className="text-slate-500 text-xs mt-1">
-            Submit leave applications, track status, and view company holiday & Sunday overtime rules
+            Submit leave applications, track status, and view official paid festival holidays (Diwali, Raksha Bandhan, Eid, etc.)
           </p>
         </div>
         <button
@@ -68,27 +100,27 @@ export default function LeavePage() {
       </div>
 
       {/* Official Holiday & Sunday Work Policy Banner */}
-      <div className="p-5 rounded-3xl bg-gradient-to-r from-indigo-900 to-slate-900 text-white shadow-md relative overflow-hidden">
+      <div className="p-5 rounded-3xl bg-gradient-to-r from-indigo-900 via-slate-900 to-indigo-950 text-white shadow-md relative overflow-hidden">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1 max-w-2xl">
             <div className="flex items-center gap-2">
-              <CalendarDays className="w-4 h-4 text-amber-400" />
+              <Sparkles className="w-4 h-4 text-amber-400" />
               <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-300">
-                Official Company Holiday & Sunday Pay Rules
+                Official Company Holiday & 100% Paid Policy
               </span>
             </div>
-            <h3 className="text-base font-bold text-white">Sundays & National Holidays Only</h3>
+            <h3 className="text-base font-bold text-white">Festivals & Sundays are 100% Paid (No Salary Deductions)</h3>
             <p className="text-slate-300 text-xs leading-relaxed">
-              There are no paid leave quotas. Official company holidays are <span className="text-white font-semibold">Sundays and National Holidays</span>.
-              If an employee works on Sunday, all worked minutes are automatically calculated into monthly salary as <span className="text-emerald-400 font-bold">Sunday Overtime Bonus Pay</span>.
+              Official company holidays (Diwali, Holi, Raksha Bandhan, Eid, Independence Day, etc.) and Sundays are fully authorized paid days off.
+              Employees do not need to punch in on these days, and <span className="text-emerald-300 font-bold">zero payment is deducted</span> from your monthly salary.
             </p>
           </div>
           <div className="bg-white/10 backdrop-blur-md p-3.5 rounded-2xl border border-white/10 text-xs shrink-0 space-y-1">
             <div className="flex items-center gap-2 text-emerald-300 font-bold">
-              <Award className="w-4 h-4" />
-              <span>Sunday Work Bonus</span>
+              <ShieldCheck className="w-4 h-4" />
+              <span>Full Base Pay Protected</span>
             </div>
-            <p className="text-[11px] text-slate-300">Calculated minute-by-minute into Salary</p>
+            <p className="text-[11px] text-slate-300">Automatic payroll holiday credit</p>
           </div>
         </div>
       </div>
@@ -110,12 +142,12 @@ export default function LeavePage() {
       {/* Overview Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">Official Company Holidays</span>
-          <p className="text-xl font-black text-indigo-600 mt-1">Sundays & Govt Holidays</p>
-          <p className="text-[11px] text-slate-400 mt-1">Weekly off & National calendar</p>
+          <span className="text-xs font-semibold text-slate-500">Official Holidays Listed</span>
+          <p className="text-xl font-black text-indigo-600 mt-1">{holidays.length} Declared Days</p>
+          <p className="text-[11px] text-slate-400 mt-1">100% Paid (Festivals & National)</p>
         </div>
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-xs">
-          <span className="text-xs font-semibold text-slate-500">Approved Leave Days</span>
+          <span className="text-xs font-semibold text-slate-500">Approved Leave Requests</span>
           <p className="text-2xl font-black text-slate-900 mt-1">
             {leaves.filter((l) => l.status === 'Approved').length} Requests
           </p>
@@ -126,8 +158,59 @@ export default function LeavePage() {
           <p className="text-2xl font-black text-amber-600 mt-1">
             {leaves.filter((l) => l.status === 'Pending').length} Pending
           </p>
-          <p className="text-[11px] text-slate-400 mt-1">Awaiting manager decision</p>
+          <p className="text-[11px] text-slate-400 mt-1">Awaiting manager review</p>
         </div>
+      </div>
+
+      {/* Official Holiday Calendar Grid */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-4">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center gap-2">
+            <PartyPopper className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-base font-bold text-slate-900">Official Company & Festival Holidays (100% Paid)</h2>
+          </div>
+          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+            Zero Salary Deduction
+          </span>
+        </div>
+
+        {holidaysLoading ? (
+          <div className="py-8 text-center text-xs text-slate-400 font-semibold">Loading holidays...</div>
+        ) : holidays.length === 0 ? (
+          <div className="py-6 text-center text-xs text-slate-400">No holidays found in calendar.</div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {upcomingHolidays.map((h) => {
+              const dateObj = new Date(`${h.date}T00:00:00`);
+              const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+              const dateFormatted = dateObj.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+
+              return (
+                <div
+                  key={h._id}
+                  className="p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-white hover:border-indigo-200 transition space-y-2 shadow-2xs"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-lg">🎉</span>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+                      {h.type}
+                    </span>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-900 text-xs line-clamp-1">{h.name}</h4>
+                    <p className="text-[11px] text-slate-500 font-medium">{dateFormatted} ({dayName})</p>
+                  </div>
+                  <div className="pt-1 border-t border-slate-200/60 flex items-center justify-between text-[10px]">
+                    <span className="text-emerald-700 font-bold flex items-center gap-1">
+                      <CheckCircle className="w-3 h-3" /> Paid Off
+                    </span>
+                    <span className="text-slate-400">No punch needed</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Leaves List */}

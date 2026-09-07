@@ -15,6 +15,7 @@ import salaryRoutes from './modules/salary/salary.routes.js';
 import notificationRoutes from './modules/notification/notification.routes.js';
 import dashboardRoutes from './modules/dashboard/dashboard.routes.js';
 import auditRoutes from './modules/audit/audit.routes.js';
+import holidayRoutes from './modules/holiday/holiday.routes.js';
 
 const app = express();
 
@@ -64,6 +65,7 @@ app.use('/api/salary', salaryRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/holidays', holidayRoutes);
 
 // Error Middleware
 app.use(errorHandler);
