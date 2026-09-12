@@ -30,8 +30,15 @@ export default function AuditPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black text-slate-900">System Security & Audit Logs</h1>
-          <p className="text-slate-500 text-xs mt-1">Immutable security trail for logins, punch-ins, salary generations & admin actions</p>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-black text-slate-900">System Security & Audit Logs</h1>
+            <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-emerald-200">
+              Last 10 Days Retention
+            </span>
+          </div>
+          <p className="text-slate-500 text-xs mt-1">
+            Immutable security trail for logins, punch-ins, salary generations & admin actions (automatically retains last 10 days)
+          </p>
         </div>
         <button
           onClick={fetchLogs}
